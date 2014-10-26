@@ -69,8 +69,9 @@ class Index(object):
     def GET(self):
         input= web.input()
         code=input.get('code','') #临时授权码
+        if not code:
+            web.seeother('/auth')
         return  code
-        code=input.get('code','') 
         
 
 
