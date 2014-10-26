@@ -70,8 +70,6 @@ class Index(object):
         input= web.input()
         code=input.get('code','') 
         
-        return "Hello world"
-        
 
 
 
