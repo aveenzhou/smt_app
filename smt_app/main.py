@@ -1,4 +1,4 @@
-#coding=utf-8
+﻿#coding=utf-8
 '''
 Created on 2014-10-24
 
@@ -46,7 +46,7 @@ def get_alibba_auth_url():
 def get_token_by_code(code):
     req_args={
               "grant_type":"authorization_code",
-              "need_refresh_token":""
+              "need_refresh_token":"true"
               }
     
 
