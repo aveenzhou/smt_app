@@ -21,7 +21,7 @@ APP_KEY="1067520"
 APP_SECRET="PUpMcxJ5om"
 
 TOKEN_URL="https://gw.api.alibaba.com/openapi/http/1/system.oauth2/getToken/"+APP_KEY
-LOCAL_APP_URL="http://127.0.0.1:8080/index"
+LOCAL_APP_URL="http://127.0.0.1:8080/auth"
 
 def get_alibba_auth_url():
     auth_args={
@@ -113,7 +113,7 @@ def get_alidata_by_api(api_name,
     res=http.request('GET',req_url,req_args)
     data=res.data
     
-    return json.loads(data)
+    return data
     
     
         
@@ -128,17 +128,11 @@ urls=(
 
 class Auth(object):
     def GET(self):
-        redirect_url=web.config.alibba_auth_url
-        web.seeother(redirect_url, absolute=True)
-    
-
-class Index(object):
-    def GET(self):
-        input= web.input()
-        code=input.get('code','') #临时授权码
+        inputs=web.input()
+        code=inputs.get("code",None)
         if not code:
-            return web.seeother('/auth')
-            
+            raise web.seeother(web.config.alibba_auth_url, absolute=True)
+        
         token_data=get_token_by_code(code)    
         
         web.config.token_data=web.storage(token_data)
@@ -150,12 +144,23 @@ class Index(object):
 #        u'refresh_token
 #        u'refresh_token_timeout
         if web.config.token_data.get('error',None):
-            return web.seeother('/auth')
+            raise web.seeother(web.config.alibba_auth_url, absolute=True)
+        else:
+            raise web.seeother("/index")
         
+
+        
+    
+
+class Index(object):
+    def GET(self):
+        if not web.config.get('token_data',None):
+            raise web.seeother(web.config.alibba_auth_url, absolute=True)
         access_token=web.config.token_data.access_token
         res_data=get_alidata_by_api(
-                           "api.getProductGroupList",
-                           access_token
+                           "api.findAeProductById",
+                            access_token,
+                            productId="32220881940"
                            )
         
         
