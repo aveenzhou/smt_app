@@ -12,6 +12,7 @@ import hmac
 import web
 import urllib
 import urllib2
+from gevent.pywsgi import WSGIServer
 
 OPEN_API_URL="http://gw.api.alibaba.com/openapi"
 
@@ -22,7 +23,8 @@ APP_SECRET="PUpMcxJ5om"
 
 TOKEN_URL="https://gw.api.alibaba.com/openapi/http/1/system.oauth2/getToken/"+APP_KEY
 LOCAL_APP_URL="http://127.0.0.1:8080/auth"
-
+http=urllib3.PoolManager()
+web.cache=web.Storage()
 def get_alibba_auth_url():
     auth_args={
                "client_id":APP_KEY,
@@ -108,8 +110,6 @@ def get_alidata_by_api(api_name,
     req_args['_aop_signature']=create_sign_str()
     
     req_url='/'.join((OPEN_API_URL,urlPath))
-    
-    http=urllib3.PoolManager()
     res=http.request('GET',req_url,req_args)
     data=res.data
     
@@ -123,7 +123,8 @@ web.config.alibba_auth_url=get_alibba_auth_url()
 ########################################
 urls=(
       '/auth','Auth',
-      '/index','Index'
+      '/index','Index',
+      '/get_smtproducts','SMTProducts'
       )
 
 class Auth(object):
@@ -154,19 +155,55 @@ class Auth(object):
 
 class Index(object):
     def GET(self):
-        if not web.config.get('token_data',None):
+        if not web.config.get('token_data',None) or web.config.token_data.get('error',None):
             raise web.seeother(web.config.alibba_auth_url, absolute=True)
+
+        
+class SMTProducts(object):
+    '''获取SMT上的产品列表
+                上架:onSelling ；下架:offline ；审核中:auditing ；审核不通过:editingRequired
+    '''
+    def GET(self):
+        if not web.config.get('token_data',None) or web.config.token_data.get('error',None):
+            raise web.seeother(web.config.alibba_auth_url, absolute=True)
+        
         access_token=web.config.token_data.access_token
         res_data=get_alidata_by_api(
-                           "api.findAeProductById",
+                           "api.findProductInfoListQuery",
                             access_token,
-                            productId="32220881940"
+                            productStatusType="onSelling",
+                            currentPage=1 #默认为第一页
                            )
+        tmp_data_lst=[]
+        json_data=json.loads(res_data)
+        web.cache.product_count=json_data['productCount']
+        web.cache.total_page=json_data['totalPage']
+        tmp_data_lst.extend(json_data['aeopAEProductDisplayDTOList'])
         
+        for i in range(2,web.cache.total_page+1):
+            page_data=get_alidata_by_api(
+                               "api.findProductInfoListQuery",
+                                access_token,
+                                productStatusType="onSelling",
+                                currentPage=i
+                               )
+            tmp_data_lst.extend(json.loads(page_data)['aeopAEProductDisplayDTOList'])
         
-        return  res_data
-        
-
+        products_lst=[]
+        for item in tmp_data_lst:
+            temp={}
+            p_id=item['productId']
+            p_info=get_alidata_by_api(
+                                   "api.findAeProductById",
+                                   access_token,
+                                   productId=p_id
+                                   )
+            temp['productId']=p_id
+            temp['productSKUs']=json.loads(p_info)['aeopAeProductSKUs']
+            products_lst.append(temp)
+            
+        web.header('Content-type', 'text/html;charset=utf-8')
+        return  products_lst
 
 
 app = web.application(urls, globals())
@@ -174,7 +211,7 @@ application=app.wsgifunc()
 
 if __name__=="__main__":
     app.run()
-
+#    WSGIServer(('0.0.0.0', 8080), application).serve_forever()
     
     
     
