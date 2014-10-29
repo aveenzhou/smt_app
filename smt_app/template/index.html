@@ -23,7 +23,7 @@
 	.table_row{background-color:#EDF3FE!important;}
 	.table_row_odd{background-color:#f7f4f4;}
 	
-	ul.sku_tab li{width:35px;float:left;margin:0 1px;height:80px;over-flow:hidden;border:1px solid #ddd;text-align:center;padding:1px 0px; }
+	ul.sku_tab li{width:35px;float:left;margin:0 1px;over-flow:hidden;border:1px solid #ddd;text-align:center;padding:1px 0px; }
 	ul.sku_tab li span.sku_name{white-space:nowrap;text-overflow:ellipsis;}
 	</style>
 </head>
@@ -58,7 +58,7 @@
 									<li>
 										{%for item in sku.aeopSKUProperty%}
 											{%if loop.index==1%}
-											<img class="sku_img" width='30px' height='30px' src="1{{item.skuImage}}" alt="" style="background:#ddd;"/>
+											<img class="sku_img" width='30px' height='30px' src="{{item.skuImage}}" alt="" style="background:#ddd;"/>
 											<span class="sku_name">{{item.propertyValueDefinitionName}}</span>
 											{%endif%}
 										{%endfor%}

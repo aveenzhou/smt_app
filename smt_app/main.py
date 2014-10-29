@@ -27,13 +27,16 @@ TOKEN_URL="https://gw.api.alibaba.com/openapi/http/1/system.oauth2/getToken/"+AP
 LOCAL_APP_URL="http://127.0.0.1:8080/auth"
 ###################
 MONGODB={
-            "DB_SERVER":'10.20.14.196',
-            "DB_PORT":28888,
+#            "DB_SERVER":'10.20.14.196',
+            "DB_SERVER":'192.168.1.103',
+#            "DB_PORT":28888,
+            "DB_PORT":27017,
             "DB_NAME":'smt_app_db',
             "DB_SMT_COLL":'smt_procucts_coll',
             "DB_USER":'aveen',
             "DB_ADMIN_PWD":'123456',
-            "DB_PWD":'123'
+            "DB_PWD":'123',
+            "IS_AUTH":False
          }
 ##########################
 
@@ -145,8 +148,9 @@ def init_dbcontext():
                       network_timeout=500, 
                       wtimeout=500,
                       tz_aware=True)
-    db_admin=conn['admin']
-    db_admin.authenticate(MONGODB['DB_USER'],MONGODB['DB_ADMIN_PWD'])
+    if MONGODB['IS_AUTH']:
+        db_admin=conn['admin']
+        db_admin.authenticate(MONGODB['DB_USER'],MONGODB['DB_ADMIN_PWD'])
     
     db=conn[MONGODB['DB_NAME']]
     web.ctx.cur_dbconn=conn
@@ -235,18 +239,19 @@ class SMTProducts(object):
         for item in tmp_data_lst:
             temp={}
             p_id=item['productId']
-            if coll.find({'smt_productId':p_id}):
-                continue
-            p_info=get_alidata_by_api(
-                                   "api.findAeProductById",
-                                   access_token,
-                                   productId=p_id
-                                   )
-            temp['smt_productId']=p_id
-            temp['smt_productSKUs']=json.loads(p_info)['aeopAeProductSKUs']
 
-            coll.insert(temp)
-            products_lst.append(temp)
+            if not coll.find({'smt_productId':p_id}):
+                    
+                p_info=get_alidata_by_api(
+                                       "api.findAeProductById",
+                                       access_token,
+                                       productId=p_id
+                                       )
+                temp['smt_productId']=p_id
+                temp['smt_productSKUs']=json.loads(p_info)['aeopAeProductSKUs']
+    
+                coll.insert(temp)
+                products_lst.append(temp)
             
             
             
