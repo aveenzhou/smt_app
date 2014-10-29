@@ -166,7 +166,7 @@ urls=(
       )
 
 class Auth(object):
-    def GET(self):
+    def GET(self):        
         inputs=web.input()
         code=inputs.get("code",None)
         if not code:
