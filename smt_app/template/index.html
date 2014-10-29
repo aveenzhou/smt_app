@@ -1,0 +1,125 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+	<meta charset="UTF-8">
+    <title>Update SMT Stock</title>
+   <link rel="stylesheet" href="/static/css/style.css" />
+	<script type="text/javascript" src="/static/js/jquery.min.js"></script>
+
+	<script type="text/javascript">
+	jQuery.noConflict(); 
+	var jq=jQuery;
+	</script>
+   <style type="text/css">
+	.ui-timepicker-div .ui-widget-header { margin-bottom: 8px;}
+	.ui-timepicker-div dl { text-align: left; }
+	.ui-timepicker-div dl dt { height: 25px; margin-bottom: -25px; }
+	.ui-timepicker-div dl dd { margin: 0 10px 10px 65px; }
+	.ui-timepicker-div td { font-size: 90%; }
+	.ui-tpicker-grid-label { background: none; border: none; margin: 0; padding: 0; }
+	.ui_tpicker_hour_label,.ui_tpicker_minute_label,.ui_tpicker_second_label,.ui_tpicker_millisec_label,.ui_tpicker_time_label{padding-left:20px}
+	
+
+	.table_row{background-color:#EDF3FE!important;}
+	.table_row_odd{background-color:#f7f4f4;}
+	
+	ul.sku_tab li{width:35px;float:left;margin:0 1px;height:80px;over-flow:hidden;border:1px solid #ddd;text-align:center;padding:1px 0px; }
+	ul.sku_tab li span.sku_name{white-space:nowrap;text-overflow:ellipsis;}
+	</style>
+</head>
+
+
+<body >
+
+   <div style="height:100%;">
+
+
+	<div class="msglist">
+		<div class="tab_filter clearfix">
+				<table>
+					<tr class="lsthead">
+						<th style="width:3%;">#</th>
+						<th style="width:10%;">SMT ID  </th>	
+						<th>SMT 库存信信息</th>
+						<th>同步</th>
+						<th>TB 连接</th>
+						<th>TB 库存</th>
+						<th>编辑</th>	
+						<th>抓取</th>
+					</tr>
+
+						{%for item in items%}
+						<tr class="lstitem" >
+							<td>{{loop.index}}</td>
+							<td>{{item.smt_productId}}</td>	
+							<td>
+								<ul class="sku_tab">
+									{%for sku in item.smt_productSKUs%}
+									<li>
+										{%for item in sku.aeopSKUProperty%}
+											{%if loop.index==1%}
+											<img class="sku_img" width='30px' height='30px' src="1{{item.skuImage}}" alt="" style="background:#ddd;"/>
+											<span class="sku_name">{{item.propertyValueDefinitionName}}</span>
+											{%endif%}
+										{%endfor%}
+
+										<select name="sku_stock" class="sku_stock" id="sku_stock_">
+										{%if sku.skuStock%}
+											<option value="true" selected>Y</option>
+											<option value="false" >N</option>
+										{%else%}
+											<option value="false" selected>N</option>
+											<option value="false" >Y</option>
+										{%endif%}
+										</select>
+									</li>
+									{%endfor%}
+								</ul>
+							</td>
+							<td></td>
+							<td></td>
+							<td></td>
+							<td></td>
+							<td></td>
+						</tr>
+						{%endfor%}
+				</table>
+		</div>
+
+		
+		<script type="text/javascript">
+			jq(function(){
+			
+				
+
+				
+				//表格样式
+				jq("tr.lstitem:odd").addClass("table_row_odd");
+				/*jq("tr.lstitem").hover(
+					function(){
+						jq(this).addClass("table_row");
+					},
+					function(){
+						jq(this).removeClass("table_row");
+					}
+				
+				)*/			
+
+				
+				
+				
+			});
+			
+		
+		</script>
+	</div>
+
+
+
+
+   </div>
+</body>
+
+<!-- END BODY -->
+</html>
+

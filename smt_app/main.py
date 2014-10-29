@@ -4,7 +4,7 @@ Created on 2014-10-24
 
 @author: Administrator
 '''
-
+import os
 import urllib3
 import json
 import hashlib
@@ -12,7 +12,9 @@ import hmac
 import web
 import urllib
 import urllib2
+import pymongo
 from gevent.pywsgi import WSGIServer
+from web.contrib.template import render_jinja
 
 OPEN_API_URL="http://gw.api.alibaba.com/openapi"
 
@@ -23,6 +25,20 @@ APP_SECRET="PUpMcxJ5om"
 
 TOKEN_URL="https://gw.api.alibaba.com/openapi/http/1/system.oauth2/getToken/"+APP_KEY
 LOCAL_APP_URL="http://127.0.0.1:8080/auth"
+###################
+MONGODB={
+            "DB_SERVER":'10.20.14.196',
+            "DB_PORT":28888,
+            "DB_NAME":'smt_app_db',
+            "DB_SMT_COLL":'smt_procucts_coll',
+            "DB_USER":'aveen',
+            "DB_ADMIN_PWD":'123456',
+            "DB_PWD":'123'
+         }
+##########################
+
+render = render_jinja(os.path.normpath(os.path.dirname(__file__) + '/template'), encoding='utf-8')
+
 http=urllib3.PoolManager()
 web.cache=web.Storage()
 def get_alibba_auth_url():
@@ -121,6 +137,28 @@ web.config.alibba_auth_url=get_alibba_auth_url()
 
 
 ########################################
+
+def init_dbcontext():
+    conn=pymongo.Connection(host=MONGODB['DB_SERVER'], 
+                      port=MONGODB['DB_PORT'], 
+                      max_pool_size=500,
+                      network_timeout=500, 
+                      wtimeout=500,
+                      tz_aware=True)
+    db_admin=conn['admin']
+    db_admin.authenticate(MONGODB['DB_USER'],MONGODB['DB_ADMIN_PWD'])
+    
+    db=conn[MONGODB['DB_NAME']]
+    web.ctx.cur_dbconn=conn
+    web.ctx.dbcontext=db
+
+def release_dbcontext():
+    try:
+        if web.ctx.get('cur_dbconn'):
+            web.ctx.cur_dbconn.close() 
+    except Exception,e:
+        print e
+
 urls=(
       '/auth','Auth',
       '/index','Index',
@@ -155,12 +193,13 @@ class Auth(object):
 
 class Index(object):
     def GET(self):
-        if not web.config.get('token_data',None) or web.config.token_data.get('error',None):
-            raise web.seeother(web.config.alibba_auth_url, absolute=True)
+        coll=getattr(web.ctx.dbcontext,MONGODB['DB_SMT_COLL'])
+        datas=coll.find()
+        return render.index(items=datas)
 
         
 class SMTProducts(object):
-    '''获取SMT上的产品列表
+    '''获取SMT上的产品列表,存入数据库
                 上架:onSelling ；下架:offline ；审核中:auditing ；审核不通过:editingRequired
     '''
     def GET(self):
@@ -190,23 +229,44 @@ class SMTProducts(object):
             tmp_data_lst.extend(json.loads(page_data)['aeopAEProductDisplayDTOList'])
         
         products_lst=[]
+        coll=getattr(web.ctx.dbcontext,MONGODB['DB_SMT_COLL'])
+        
+        
         for item in tmp_data_lst:
             temp={}
             p_id=item['productId']
+            if coll.find({'smt_productId':p_id}):
+                continue
             p_info=get_alidata_by_api(
                                    "api.findAeProductById",
                                    access_token,
                                    productId=p_id
                                    )
-            temp['productId']=p_id
-            temp['productSKUs']=json.loads(p_info)['aeopAeProductSKUs']
+            temp['smt_productId']=p_id
+            temp['smt_productSKUs']=json.loads(p_info)['aeopAeProductSKUs']
+
+            coll.insert(temp)
             products_lst.append(temp)
+            
+            
             
         web.header('Content-type', 'text/html;charset=utf-8')
         return  products_lst
 
 
+
+def loadhook():
+    try:
+        init_dbcontext()
+    except Exception,e:
+        print e
+
+def unloadhook():
+    release_dbcontext()
+
 app = web.application(urls, globals())
+app.add_processor(web.loadhook(loadhook))
+app.add_processor(web.unloadhook(unloadhook))
 application=app.wsgifunc()
 
 if __name__=="__main__":
