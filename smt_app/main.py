@@ -27,16 +27,16 @@ TOKEN_URL="https://gw.api.alibaba.com/openapi/http/1/system.oauth2/getToken/"+AP
 LOCAL_APP_URL="http://127.0.0.1:8080/auth"
 ###################
 MONGODB={
-            "DB_SERVER":'10.20.14.196',
-#            "DB_SERVER":'192.168.1.103',
-            "DB_PORT":28888,
-#            "DB_PORT":27017,
+#            "DB_SERVER":'10.20.14.196',
+            "DB_SERVER":'192.168.1.103',
+#            "DB_PORT":28888,
+            "DB_PORT":27017,
             "DB_NAME":'smt_app_db',
             "DB_SMT_COLL":'smt_procucts_coll',
             "DB_USER":'aveen',
             "DB_ADMIN_PWD":'123456',
             "DB_PWD":'123',
-            "IS_AUTH":True
+            "IS_AUTH":False
          }
 ##########################
 def imageUrlFilter(url):
@@ -293,7 +293,6 @@ class SMTProducts(object):
         products_lst=[]
         coll=getattr(web.ctx.dbcontext,MONGODB['DB_SMT_COLL'])
         
-        
         for item in tmp_data_lst:
             temp={}
             p_id=item['productId']
@@ -335,7 +334,7 @@ class SMTProducts(object):
             
             
         web.header('Content-type', 'text/html;charset=utf-8')
-        return  products_lst
+        return  len(products_lst)
     
     def get_attr_by_cateid(self,cateid):
         '''根据产品的cateId获取属性值'''
