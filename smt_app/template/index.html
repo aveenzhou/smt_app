@@ -39,8 +39,9 @@
 				<table>
 					<tr class="lsthead">
 						<th style="width:3%;">#</th>
-						<th style="width:10%;">SMT ID  </th>	
-						<th>SMT 库存信信息</th>
+						<th style="width:10%;">SMT ID  </th>
+						<th style="width:50px;">产品</th>
+						<th style="width:20%;">SMT 库存信信息</th>
 						<th>同步</th>
 						<th>TB 连接</th>
 						<th>TB 库存</th>
@@ -50,31 +51,70 @@
 
 						{%for item in items%}
 						<tr class="lstitem" >
-							<td>{{loop.index}}</td>
-							<td>{{item.smt_productId}}</td>	
+							<td style="vertical-align:top;text-align:center;">{{loop.index}}</td>
+							<td style="vertical-align:top;text-align:center;">{{item.smt_productId}}</td>	
+							<td style="vertical-align:top;text-align:left;"><img width="50" src="{{item.image_url|imageUrlFilter}}" alt="" /></td>
 							<td>
-								<ul class="sku_tab">
+								<style type="text/css">
+								#sku-table{border:1px solid #C2C2C2;background-color:#fff;}
+								#sku-table th,#sku-table td{padding:3px;border:1px solid #C2C2C2;text-align:center;vertical-align:middle;}
+								</style>
+								<table id="sku-table" class="table-list">
+								<thead>
+									<tr>
+										{% set sku_first_item=item.smt_productSKUs[0] %}
+										
+										{% set sku_head_fields=sku_first_item.aeopSKUProperty %}
+										{% for field in sku_head_fields %}
+											<th>{{ field.skuPropertyIdName_en}}</th>
+										{% endfor %}
+										
+										{%if sku_head_fields%}
+										{% set sku_head_fields_fisrt=sku_head_fields[0]%}
+										{%if sku_head_fields_fisrt.propertyValueDefinitionName%}
+										<th>StyleName</th>
+										{%endif%}
+										{%if sku_head_fields_fisrt.skuImage%}
+										<th>Image</th>
+										{%endif%}
+										{%endif%}
+										<th>Stock</th>
+									</tr>
+									</thead>
+									<tbody>
 									{%for sku in item.smt_productSKUs%}
-									<li>
-										{%for item in sku.aeopSKUProperty%}
-											{%if loop.index==1%}
-											<img class="sku_img" width='30px' height='30px' src="{{item.skuImage}}" alt="" style="background:#ddd;"/>
-											<span class="sku_name">{{item.propertyValueDefinitionName}}</span>
+									<tr>
+										{%if sku.aeopSKUProperty %}
+											
+											{% for sku_proper in sku.aeopSKUProperty%}
+												<td>{{sku_proper.propertyValueIdName_en}}</td>
+											{% endfor %}
+											
+											{% set skuProperty = sku.aeopSKUProperty[0] %}
+											{% if skuProperty.propertyValueDefinitionName%}
+											<td>{{skuProperty.propertyValueDefinitionName}}</td>
 											{%endif%}
-										{%endfor%}
+											{%if skuProperty.skuImage%}
+											<td><img width="35"  src="{{skuProperty.skuImage|imageUrlFilter}}"></td>
+											{%endif%}
 
-										<select name="sku_stock" class="sku_stock" id="sku_stock_">
+										{%endif%}
+										
+										<td>
+										<select name="sku_stock" class="sku_stock" id="sku_stock_" ">
 										{%if sku.skuStock%}
-											<option value="true" selected>Y</option>
-											<option value="false" >N</option>
+											<option value="true" selected>in stock</option>
+											<option value="false" >not in stock</option>
 										{%else%}
-											<option value="false" selected>N</option>
-											<option value="false" >Y</option>
+											<option value="false" selected>not in stock</option>
+											<option value="true" >in stock</option>
 										{%endif%}
 										</select>
-									</li>
+										</td>
+									</tr>
 									{%endfor%}
-								</ul>
+								</tbody>
+								</table>
 							</td>
 							<td></td>
 							<td></td>
