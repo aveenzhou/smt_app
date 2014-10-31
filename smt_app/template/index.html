@@ -22,9 +22,13 @@
 
 	.table_row{background-color:#EDF3FE!important;}
 	.table_row_odd{background-color:#f7f4f4;}
+	#main_tab td{vertical-align:top;text-align:center;}
+	table.table-list td.sku-image-td{position:relative;}
+	img.sku-image-large{display:block;z-index:100;position:absolute;left:50%;top:50%;border:2px solid #ddd;
+						box-shadow:-3px -3px 5px #999;}
 	
-	ul.sku_tab li{width:35px;float:left;margin:0 1px;over-flow:hidden;border:1px solid #ddd;text-align:center;padding:1px 0px; }
-	ul.sku_tab li span.sku_name{white-space:nowrap;text-overflow:ellipsis;}
+	#link-edit{width:250px;z-index:111;height:80px;border:2px solid #ddd;border-radius:2px;
+	position:fixed;left:50%;top:50%;box-shadow:-3px -3px 5px #999;background-color:#EDF3FE;}
 	</style>
 </head>
 
@@ -35,30 +39,25 @@
 
 
 	<div class="msglist">
-		<div class="tab_filter clearfix">
-				<table>
+		<div class="tab_filter clearfix" style="position:relative;">
+				<table id="main_tab">
 					<tr class="lsthead">
 						<th style="width:3%;">#</th>
 						<th style="width:10%;">SMT ID  </th>
-						<th style="width:50px;">产品</th>
-						<th style="width:20%;">SMT 库存信信息</th>
-						<th>同步</th>
-						<th>TB 连接</th>
-						<th>TB 库存</th>
-						<th>编辑</th>	
-						<th>抓取</th>
+						<th style="width:70px;">产品</th>
+						<th style="width:25%;">SMT 库存信信息</th>
+						<th style="width:15%;">外部链接</th>
+						<th>外部库存</th>
+						<th style="width:10%;">同步</th>
 					</tr>
 
 						{%for item in items%}
-						<tr class="lstitem" >
-							<td style="vertical-align:top;text-align:center;">{{loop.index}}</td>
-							<td style="vertical-align:top;text-align:center;">{{item.smt_productId}}</td>	
-							<td style="vertical-align:top;text-align:left;"><img width="50" src="{{item.image_url|imageUrlFilter}}" alt="" /></td>
+						
+						<tr  {%if loop.index%2==0 %}class='lstitem table_row_odd' {%else%}class="lstitem"{%endif%}>
+							<td >{{loop.index}}</td>
+							<td >{{item.smt_productId}}</td>	
+							<td ><img width="70" src="{{item.image_url|imageUrlFilter}}" alt="" /></td>
 							<td>
-								<style type="text/css">
-								#sku-table{border:1px solid #C2C2C2;background-color:#fff;}
-								#sku-table th,#sku-table td{padding:3px;border:1px solid #C2C2C2;text-align:center;vertical-align:middle;}
-								</style>
 								<table id="sku-table" class="table-list">
 								<thead>
 									<tr>
@@ -69,14 +68,11 @@
 											<th>{{ field.skuPropertyIdName_en}}</th>
 										{% endfor %}
 										
-										{%if sku_head_fields%}
-										{% set sku_head_fields_fisrt=sku_head_fields[0]%}
-										{%if sku_head_fields_fisrt.propertyValueDefinitionName%}
-										<th>StyleName</th>
-										{%endif%}
-										{%if sku_head_fields_fisrt.skuImage%}
-										<th>Image</th>
-										{%endif%}
+										{% if sku_head_fields%}
+											{% set sku_head_fields_fisrt=sku_head_fields[0] %}
+											{%if sku_head_fields_fisrt.skuImage%}
+											<th>Image</th>
+											{%endif%}
 										{%endif%}
 										<th>Stock</th>
 									</tr>
@@ -87,15 +83,21 @@
 										{%if sku.aeopSKUProperty %}
 											
 											{% for sku_proper in sku.aeopSKUProperty%}
+											
+												
+												{%if sku_proper.propertyValueDefinitionName %}
+												<td>{{sku_proper.propertyValueDefinitionName}}</td>
+												{% else %}
 												<td>{{sku_proper.propertyValueIdName_en}}</td>
+												{% endif %}
 											{% endfor %}
 											
-											{% set skuProperty = sku.aeopSKUProperty[0] %}
-											{% if skuProperty.propertyValueDefinitionName%}
-											<td>{{skuProperty.propertyValueDefinitionName}}</td>
-											{%endif%}
+											{%set skuProperty=sku.aeopSKUProperty[0]%}
 											{%if skuProperty.skuImage%}
-											<td><img width="35"  src="{{skuProperty.skuImage|imageUrlFilter}}"></td>
+											<td class="sku-image-td">
+												<img width="35"  src="{{skuProperty.skuImage|imageUrlFilter}}" class="sku-image">
+												<img style="display:none;" src="{{skuProperty.skuImage}}" alt="" class="sku-image-large" />
+											</td>
 											{%endif%}
 
 										{%endif%}
@@ -116,36 +118,53 @@
 								</tbody>
 								</table>
 							</td>
+							<td>
+								{% if item.taobao_link %}
+								<a class="tb_link" href="{{ item.taobao_link }}" id="link_{{ loop.index }}" target="_blank">{{ item.taobao_link }}</a>
+								<p><button class="update_link">更改</button></p>
+								{%else%}
+								<a class="tb_link" href="#" id="link_{{ loop.index }}" target="_blank">Null</a>
+								<p><button class="update_link">更改</button></p>
+								{%endif%}								
+							</td>
 							<td></td>
-							<td></td>
-							<td></td>
-							<td></td>
-							<td></td>
+							<td>
+								<button class="syn_sku">同步库存到SMT</button>
+							</td>
 						</tr>
 						{%endfor%}
 				</table>
+				<div id="link-edit">
+					<textarea name="" id="" cols="30" rows="5"></textarea>
+					<button>确定</button>
+				</div>
 		</div>
 
 		
 		<script type="text/javascript">
 			jq(function(){
 			
-				
-
-				
-				//表格样式
-				jq("tr.lstitem:odd").addClass("table_row_odd");
-				/*jq("tr.lstitem").hover(
+				jq('.sku-image').toggle(
 					function(){
-						jq(this).addClass("table_row");
+						jq(this).next(".sku-image-large").show();
 					},
 					function(){
-						jq(this).removeClass("table_row");
+						jq(this).next(".sku-image-large").hide();
 					}
 				
-				)*/			
-
+				);
+				jq('.sku-image-large').click(function(){
+					jq(this).hide();
 				
+				});
+				
+				jq('.tb_link').mouseover(function(){
+					jq(this).next('.tb_link_frame').show();
+				});
+
+				jq('.tb_link_frame').click(function(){
+					jq(this).hide();
+				});
 				
 				
 			});

@@ -14,6 +14,11 @@ import urllib
 import urllib2
 import pymongo
 from gevent.pywsgi import WSGIServer
+import gevent.monkey 
+gevent.monkey.patch_all() 
+##有请求是阻塞操作需设置nonkey
+##SMTProducts请求处理，本身的server处理同时调用两次,且发生阻塞,导致两个请求写入相同的数据
+
 from web.contrib.template import render_jinja
 
 OPEN_API_URL="http://gw.api.alibaba.com/openapi"
@@ -27,16 +32,16 @@ TOKEN_URL="https://gw.api.alibaba.com/openapi/http/1/system.oauth2/getToken/"+AP
 LOCAL_APP_URL="http://127.0.0.1:8080/auth"
 ###################
 MONGODB={
-#            "DB_SERVER":'10.20.14.196',
-            "DB_SERVER":'192.168.1.103',
-#            "DB_PORT":28888,
-            "DB_PORT":27017,
+            "DB_SERVER":'10.20.14.196',
+#            "DB_SERVER":'192.168.1.103',
+            "DB_PORT":28888,
+#            "DB_PORT":27017,
             "DB_NAME":'smt_app_db',
             "DB_SMT_COLL":'smt_procucts_coll',
             "DB_USER":'aveen',
             "DB_ADMIN_PWD":'123456',
             "DB_PWD":'123',
-            "IS_AUTH":False
+            "IS_AUTH":True
          }
 ##########################
 def imageUrlFilter(url):
@@ -54,6 +59,7 @@ web.cache=web.Storage()
 web.cache.sku_properid_datas=web.storage()
 web.cache.sku_properval_datas=web.storage()
 web.cache.cate_attr_datas=web.storage()
+
 def get_alibba_auth_url():
     auth_args={
                "client_id":APP_KEY,
@@ -172,6 +178,7 @@ def release_dbcontext():
     except Exception,e:
         print e
 
+
 urls=(
       '/auth','Auth',
       '/index','Index',
@@ -184,11 +191,14 @@ class Test(object):
     def GET(self):
         if not web.config.get('token_data',None) or web.config.token_data.get('error',None):
             raise web.seeother(web.config.alibba_auth_url, absolute=True)
+        inputs=web.input()
+        id=inputs.get("id",None)
+        type=inputs.get('type',None)
+        cateid=inputs.get('cateid',None)
+        productid=inputs.get('productid',None)
         
-        id=web.input().get("id",None)
-        type=web.input().get('type',None)
-        cateid=web.input().get('cateid',None)
         access_token=web.config.token_data.access_token
+        web.header('Content-type', 'text/html;charset=utf-8')
         if id:
             
             p_info=get_alidata_by_api(
@@ -217,9 +227,17 @@ class Test(object):
                                 cateId=cateid,
                                )
             json_data=json.loads(res_data)
-            web.header('Content-type', 'text/html;charset=utf-8')
             return res_data
-
+        
+        if productid:
+            res_data=get_alidata_by_api(
+                               "api.listTbProductByIds",
+                                access_token,
+                                productIds=productid,
+                               )
+            json_data=json.loads(res_data)
+            return res_data
+            
 
 class Auth(object):
     def GET(self):        
@@ -296,46 +314,50 @@ class SMTProducts(object):
         for item in tmp_data_lst:
             temp={}
             p_id=item['productId']
-            if not coll.find_one({'smt_productId':p_id}):
-                p_info=get_alidata_by_api(
-                                       "api.findAeProductById",
-                                       self.access_token,
-                                       productId=p_id
-                                       )
-                p_info_json=json.loads(p_info)
-                if not json_data.get('success',None):
-                    return "调用api.findAeProductById 接口失败"
-                
-                temp['smt_productId']=p_id
-                temp['image_url']=p_info_json['imageURLs'].split(';')[0]
-                temp['smt_productSKUs']=p_info_json['aeopAeProductSKUs']
-                
-                cateid=p_info_json['categoryId']
-                atrrs=self.get_attr_by_cateid(cateid)
-                if not atrrs.get('success',None):
-                    return "调用api.getAttributesResultByCateId 接口失败"
-                
-                atrrs_lst=atrrs['attributes']
-                
-                smt_skus=temp['smt_productSKUs']
-                
-                for item in smt_skus:
-                    if item['aeopSKUProperty']:
-                        for sku_p in item['aeopSKUProperty']:
-                            skuPropertyIdName_en,propertyValues=self.get_skuPropertyId_Name(atrrs_lst,sku_p['skuPropertyId'])
-                            propertyValueIdName_en=self.get_propertyValueId_Name(propertyValues,sku_p['propertyValueId'])
-                            sku_p['skuPropertyIdName_en']=skuPropertyIdName_en
-                            sku_p['propertyValueIdName_en']=propertyValueIdName_en
-                
-    
+
+            p_info=get_alidata_by_api(
+                                   "api.findAeProductById",
+                                   self.access_token,
+                                   productId=p_id
+                                   )
+            p_info_json=json.loads(p_info)
+            if not json_data.get('success',None):
+                return "调用api.findAeProductById 接口失败"
+            
+            temp['smt_productId']=p_id
+            temp['image_url']=p_info_json['imageURLs'].split(';')[0]
+            temp['smt_productSKUs']=p_info_json['aeopAeProductSKUs']
+            
+            cateid=p_info_json['categoryId']
+            atrrs=self.get_attr_by_cateid(cateid)
+            if not atrrs.get('success',None):
+                return "调用api.getAttributesResultByCateId 接口失败"
+            
+            atrrs_lst=atrrs['attributes']
+            
+            smt_skus=temp['smt_productSKUs']
+            
+            for item in smt_skus:
+                if item['aeopSKUProperty']:
+                    for sku_p in item['aeopSKUProperty']:
+                        skuPropertyIdName_en,propertyValues=self.get_skuPropertyId_Name(atrrs_lst,sku_p['skuPropertyId'])
+                        propertyValueIdName_en=self.get_propertyValueId_Name(propertyValues,sku_p['propertyValueId'])
+                        sku_p['skuPropertyIdName_en']=skuPropertyIdName_en
+                        sku_p['propertyValueIdName_en']=propertyValueIdName_en
+            
+            temp['taobao_link']=self.get_taobaolinkbyId(p_id)
+            is_exist=coll.find_one({'smt_productId':p_id})
+            if not is_exist:
                 coll.insert(temp)
-                products_lst.append(temp)
-            
-            
-            
+            else:
+                coll.update({'smt_productId':p_id},temp)
+
+                
+            products_lst.append(temp)
         web.header('Content-type', 'text/html;charset=utf-8')
-        return  len(products_lst)
+        return  products_lst
     
+
     def get_attr_by_cateid(self,cateid):
         '''根据产品的cateId获取属性值'''
         if web.cache.cate_attr_datas.get(cateid,None):
@@ -379,7 +401,16 @@ class SMTProducts(object):
                 web.cache.sku_properval_datas[propertyValueId]=propertyValueIdName_en
                 return propertyValueIdName_en
         
-    
+    def get_taobaolinkbyId(self,p_id):
+        res_data=get_alidata_by_api(
+                           "api.listTbProductByIds",
+                            self.access_token,
+                            productIds=p_id,
+                           )
+        json_data=json.loads(res_data)
+        if isinstance(json_data, list) and json_data:
+            link=json_data[0].get('detailUrl',None)
+            return link
 
 
 
@@ -400,8 +431,8 @@ application=app.wsgifunc()
 
 if __name__=="__main__":
     app.run()
+#    web.httpserver.runsimple(application, ('0.0.0.0', 8080))
 #    WSGIServer(('0.0.0.0', 8080), application).serve_forever()
-#    print imageUrlFilter("http://img.vip.alibaba.com/img/wsproduct/sku/20/43/86/21/2043862125_175.jpg?1414551993115")
     
     
     
