@@ -1,2 +1,5 @@
 eclipse.preferences.version=1
+encoding/conf.py=utf-8
+encoding/get_smt_products.py=utf-8
 encoding/main.py=utf-8
+encoding/smt_api.py=utf-8

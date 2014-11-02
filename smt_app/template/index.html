@@ -27,17 +27,50 @@
 	img.sku-image-large{display:block;z-index:100;position:absolute;left:50%;top:50%;border:2px solid #ddd;
 						box-shadow:-3px -3px 5px #999;}
 	
-	#link-edit{width:250px;z-index:111;height:80px;border:2px solid #ddd;border-radius:2px;
-	position:fixed;left:50%;top:50%;box-shadow:-3px -3px 5px #999;background-color:#EDF3FE;}
+	#link-edit{width: 60%;
+			z-index: 1026;
+			height: 115px;
+			border: 2px solid #ddd;
+			border-radius: 2px;
+			position: fixed;
+			left: 20%;
+			top: 30%;
+			box-shadow:2px 2px 5px #D8D6D6;
+			background-color: #EDF3FE;padding:5px;text-align:center;}
+			
+	#link-edit textarea{width:95%;height:60px;resize:none}
+	.msglist button{padding:3px 5px;display:block;margin:5px auto;}
+	.link-confirm{display: block;margin: 5px auto;padding:3px 5px;}
+	
+	.blur{-webkit-filter:blur(2px);}
+	
+	#body_mask{
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0,0,0,0.1);
+		z-index: 1025;
+	
+	}
+	#load-pic{
+		position:fixed;
+		left: 50%;
+		top: 30%;
+		z-index: 1026;
+		width:32px;
+		height:32px;
+		display:none;
+	}
 	</style>
 </head>
 
 
 <body >
-
+   <div id="body_mask" style="display:none;"></div>
+   <div id="load-pic" ><img src="/static/css/images/loading.gif" alt="" /></div>
    <div style="height:100%;">
-
-
 	<div class="msglist">
 		<div class="tab_filter clearfix" style="position:relative;">
 				<table id="main_tab">
@@ -46,9 +79,10 @@
 						<th style="width:10%;">SMT ID  </th>
 						<th style="width:70px;">产品</th>
 						<th style="width:25%;">SMT 库存信信息</th>
+						<th style="width:10%;">同步</th>
 						<th style="width:15%;">外部链接</th>
 						<th>外部库存</th>
-						<th style="width:10%;">同步</th>
+						
 					</tr>
 
 						{%for item in items%}
@@ -118,29 +152,35 @@
 								</tbody>
 								</table>
 							</td>
-							<td>
-								{% if item.taobao_link %}
-								<a class="tb_link" href="{{ item.taobao_link }}" id="link_{{ loop.index }}" target="_blank">{{ item.taobao_link }}</a>
-								<p><button class="update_link">更改</button></p>
-								{%else%}
-								<a class="tb_link" href="#" id="link_{{ loop.index }}" target="_blank">Null</a>
-								<p><button class="update_link">更改</button></p>
-								{%endif%}								
-							</td>
-							<td></td>
+							
 							<td>
 								<button class="syn_sku">同步库存到SMT</button>
 							</td>
+							<td>
+								{% if item.taobao_link %}
+								<a class="tb_link" href="{{ item.taobao_link }}" id="link_{{ item.smt_productId }}" target="_blank">{{ item.taobao_link }}</a>
+								<button class="update_link">更改</button>
+								{%else%}
+								<a class="tb_link" href="#" id="link_{{ item.smt_productId }}" target="_blank">Null</a>
+								<button class="update_link">更改</button>
+								{%endif%}								
+							</td>
+
+							<td></td>
 						</tr>
 						{%endfor%}
 				</table>
-				<div id="link-edit">
-					<textarea name="" id="" cols="30" rows="5"></textarea>
-					<button>确定</button>
-				</div>
+
 		</div>
 
-		
+	</div>
+
+		<div id="link-edit" style="display:none;">
+			<p style="text-align:left;padding-left:20px;">链接编号:<span id="link_id" ></span></p>
+			<span style="position:absolute;right:5px;top:5px;width:10px;height:10px;display:block;cursor:pointer;">X</span>
+			<textarea id="link-text" name=""  cols="50" rows="5"></textarea>
+			<button class="link-confirm">确定</button>
+		</div>
 		<script type="text/javascript">
 			jq(function(){
 			
@@ -158,23 +198,66 @@
 				
 				});
 				
-				jq('.tb_link').mouseover(function(){
-					jq(this).next('.tb_link_frame').show();
+				jq('.update_link').click(function(){
+					link_val=jq(this).prev('a.tb_link').text();
+					product_id=jq(this).prev('a.tb_link').attr('id');
+					jq("#link-text").val(link_val);
+					jq("#link_id").text(product_id);
+					jq("#body_mask").show();
+					jq("#link-edit").show();
+					jq(".msglist").addClass('blur');
 				});
+				
+				jq("#link-edit span").click(function(){
+					jq("#link-edit").hide();
+					jq("#body_mask").hide();
+					jq(".msglist").removeClass('blur');
+				});
+				
+				jq(".link-confirm").click(function(){
+					new_link=jq("#link-text").val();
+					link_id=jq("#link_id").text();
+					
+					product_id=link_id.split('_')[1];
+					jq.ajax({
+						type:"GET",
+						url:"update_link",
+						data:{"productId":product_id,"newLink":new_link},
+						dataType:'json',
+						timeout:30000,
+						success:function(data){
+							if(data.status){
+								jq("#"+link_id).attr("href",new_link);
+								jq("#"+link_id).text(new_link);
+							}
 
-				jq('.tb_link_frame').click(function(){
-					jq(this).hide();
+							jq("#load-pic").hide();
+							jq("#body_mask").hide();
+							jq(".msglist").removeClass('blur');
+							
+							alert("Tips:"+data.msg);
+						},
+						error:function(XMLHttpRequest, textStatus, errorThrown){
+							jq("#load-pic").hide();
+							jq("#body_mask").hide();
+							jq(".msglist").removeClass('blur');
+							if (XMLHttpRequest.status==200){
+								alert("Tips:update link error,"+textStatus+","+errorThrown);
+							}else{
+								alert("Tips:update link error,"+XMLHttpRequest.statusText+":"+XMLHttpRequest.status);
+							}	
+						}
+					
+					});
+					jq("#link-edit").hide();
+					jq("#load-pic").show();
+					
+					
 				});
-				
-				
 			});
 			
 		
 		</script>
-	</div>
-
-
-
 
    </div>
 </body>
