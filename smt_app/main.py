@@ -58,6 +58,7 @@ urls=(
       '/auth','Auth',
       '/index','Index',
       '/update_link','UpdateLink',
+      '/stock_update','StockUpdate',
       '/test','Test'
       )
 
@@ -71,6 +72,7 @@ class Test(object):
         type=inputs.get('type',None)
         cateid=inputs.get('cateid',None)
         productid=inputs.get('productid',None)
+        stock=inputs.get('stock',None)
         
         access_token=web.config.token_data.access_token
         web.header('Content-type', 'text/html;charset=utf-8')
@@ -111,6 +113,13 @@ class Test(object):
                                )
             dict_data=json.loads(res_data)
             return res_data
+        if stock and productid:
+            get_alidata_by_api(
+                               "api.editProductCidAttIdSku",
+                               access_token,
+                               productIds=productid,
+                               
+                               )
             
 
 class Auth(object):
@@ -164,6 +173,12 @@ class UpdateLink(object):
             return json.dumps({"msg":"更新成功","status":True})
         except Exception,e:
             return json.dumps({"msg":"更新失败%s" % str(e),"status":False})
+
+
+
+class StockUpdate(object):
+    def GET(self):
+        pass
 
 
 

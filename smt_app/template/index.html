@@ -23,7 +23,7 @@
 	.table_row{background-color:#EDF3FE!important;}
 	.table_row_odd{background-color:#f7f4f4;}
 	#main_tab td{vertical-align:top;text-align:center;}
-	table.table-list td.sku-image-td{position:relative;}
+	table#sku-table td.sku-image-td{position:relative;}
 	img.sku-image-large{display:block;z-index:100;position:absolute;left:50%;top:50%;border:2px solid #ddd;
 						box-shadow:-3px -3px 5px #999;}
 	
@@ -92,7 +92,7 @@
 							<td >{{item.smt_productId}}</td>	
 							<td ><img width="70" src="{{item.image_url|imageUrlFilter}}" alt="" /></td>
 							<td>
-								<table id="sku-table" class="table-list">
+								<table id="sku-table" class="table-list" >
 								<thead>
 									<tr>
 										{% set sku_first_item=item.smt_productSKUs[0] %}
@@ -120,9 +120,9 @@
 											
 												
 												{%if sku_proper.propertyValueDefinitionName %}
-												<td>{{sku_proper.propertyValueDefinitionName}}</td>
+												<td class="sku_proper" skuproperid="{{ sku_proper.skuPropertyId}}" propervalid="{{ sku_proper.propertyValueId }}">{{sku_proper.propertyValueDefinitionName}}</td>
 												{% else %}
-												<td>{{sku_proper.propertyValueIdName_en}}</td>
+												<td class="sku_proper" skuproperid="{{ sku_proper.skuPropertyId}}" propervalid="{{ sku_proper.propertyValueId }}">{{sku_proper.propertyValueIdName_en}}</td>
 												{% endif %}
 											{% endfor %}
 											
@@ -137,7 +137,7 @@
 										{%endif%}
 										
 										<td>
-										<select name="sku_stock" class="sku_stock" id="sku_stock_" ">
+										<select name="sku_stock" class="sku_stock" >
 										{%if sku.skuStock%}
 											<option value="true" selected>in stock</option>
 											<option value="false" >not in stock</option>
@@ -154,7 +154,7 @@
 							</td>
 							
 							<td>
-								<button class="syn_sku">同步库存到SMT</button>
+								<button class="syn_sku" onClick="update({{item.smt_productId}});">同步库存到SMT</button>
 							</td>
 							<td>
 								{% if item.taobao_link %}
