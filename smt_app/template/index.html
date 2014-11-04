@@ -25,7 +25,7 @@
 	#main_tab td{vertical-align:top;text-align:center;}
 	table#sku-table td.sku-image-td{position:relative;}
 	img.sku-image-large{display:block;z-index:100;position:absolute;left:50%;top:50%;border:2px solid #ddd;
-						box-shadow:-3px -3px 5px #999;}
+						box-shadow:-3px -2px 8px #B26A6A;}
 	
 	#link-edit{width: 60%;
 			z-index: 1026;
@@ -35,7 +35,7 @@
 			position: fixed;
 			left: 20%;
 			top: 30%;
-			box-shadow:2px 2px 5px #D8D6D6;
+			box-shadow:2px 2px 5px #8E8888;
 			background-color: #EDF3FE;padding:5px;text-align:center;}
 			
 	#link-edit textarea{width:95%;height:60px;resize:none}
@@ -43,7 +43,7 @@
 	.link-confirm{display: block;margin: 5px auto;padding:3px 5px;}
 	
 	.blur{-webkit-filter:blur(2px);}
-	
+	.blur2{-webkit-filter:blur(5px);}
 	#body_mask{
 		position: absolute;
 		top: 0;
@@ -65,7 +65,62 @@
 	}
 	</style>
 </head>
+<script type="text/javascript">
+	function update(p_id){
+		var allrow=jq(".table-list-"+p_id).find("tr.sku-row");
+		var productSKUs=[]//获取页面显示的库存信息
+		allrow.each(function(){
+			var sku_propert_item={}
+			sku_propert_item['aeopSKUProperty']=[]
+			jq(this).find('td.sku_proper').each(function(){
+				var skuPropertyId=parseInt(jq(this).attr("skuproperid"));
+				var propertyValueId=parseInt(jq(this).attr("propervalid"));
+				sku_propert_item['aeopSKUProperty'].push({"skuPropertyId":skuPropertyId,"propertyValueId":propertyValueId});
+			
+			});
+			var stock=jq(this).find(".sku_stock").val();
+			if(stock=='false'){
+				sku_propert_item['skuStock']=false;
+			}else{
+				sku_propert_item['skuStock']=true;
+			}
+				
+				
+			productSKUs.push(sku_propert_item);
+			
+		
+		});
+		var sku_json=JSON.stringify(productSKUs);
+		alert(sku_json)
+		jq.ajax({
+			type:'GET',
+			url:'stock_update',
+			data:{"productSKUs":sku_json,"productId":p_id},
+			dataType:'json',
+			timeout:30000,
+			success:function(data){
+				jq("#load-pic").hide();
+				alert(data.msg);
+				jq("#body_mask").hide();
+				jq(".msglist").removeClass('blur2');
+			},
+			error:function(XMLHttpRequest, textStatus, errorThrown){
+				jq("#load-pic").hide();
+				jq("#body_mask").hide();
+				jq(".msglist").removeClass('blur2');
+				if (XMLHttpRequest.status==200){
+					alert("Tips:update error,"+textStatus+","+errorThrown);
+				}else{
+					alert("Tips:update error,"+XMLHttpRequest.statusText+":"+XMLHttpRequest.status);
+				}	
+			}
+		});
+		jq(".msglist").addClass('blur2');
+		jq("#body_mask").show();
+		jq("#load-pic").show();
+	}
 
+</script>
 
 <body >
    <div id="body_mask" style="display:none;"></div>
@@ -73,7 +128,8 @@
    <div style="height:100%;">
 	<div class="msglist">
 		<div class="tab_filter clearfix" style="position:relative;">
-				<table id="main_tab">
+				<table id="main_tab" >
+
 					<tr class="lsthead">
 						<th style="width:3%;">#</th>
 						<th style="width:10%;">SMT ID  </th>
@@ -92,8 +148,8 @@
 							<td >{{item.smt_productId}}</td>	
 							<td ><img width="70" src="{{item.image_url|imageUrlFilter}}" alt="" /></td>
 							<td>
-								<table id="sku-table" class="table-list" >
-								<thead>
+								<table id="sku-table" class="table-list-{{ item.smt_productId }}" >
+									<thead>
 									<tr>
 										{% set sku_first_item=item.smt_productSKUs[0] %}
 										
@@ -113,7 +169,7 @@
 									</thead>
 									<tbody>
 									{%for sku in item.smt_productSKUs%}
-									<tr>
+									<tr class="sku-row">
 										{%if sku.aeopSKUProperty %}
 											
 											{% for sku_proper in sku.aeopSKUProperty%}
@@ -230,12 +286,11 @@
 								jq("#"+link_id).attr("href",new_link);
 								jq("#"+link_id).text(new_link);
 							}
-
+							
+							alert("Tips:"+data.msg);
 							jq("#load-pic").hide();
 							jq("#body_mask").hide();
 							jq(".msglist").removeClass('blur');
-							
-							alert("Tips:"+data.msg);
 						},
 						error:function(XMLHttpRequest, textStatus, errorThrown){
 							jq("#load-pic").hide();
@@ -254,6 +309,9 @@
 					
 					
 				});
+				
+				
+				
 			});
 			
 		

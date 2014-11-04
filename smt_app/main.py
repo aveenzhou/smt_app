@@ -7,7 +7,7 @@ Created on 2014-10-24
 import os
 import urllib3
 import json
-
+import copy
 import web
 
 import pymongo
@@ -105,7 +105,7 @@ class Test(object):
             dict_data=json.loads(res_data)
             return res_data
         
-        if productid:
+        if productid and not stock:
             res_data=get_alidata_by_api(
                                "api.listTbProductByIds",
                                 access_token,
@@ -114,11 +114,12 @@ class Test(object):
             dict_data=json.loads(res_data)
             return res_data
         if stock and productid:
+            print stock
             get_alidata_by_api(
                                "api.editProductCidAttIdSku",
                                access_token,
                                productIds=productid,
-                               
+                               productSkus=stock
                                )
             
 
@@ -178,7 +179,52 @@ class UpdateLink(object):
 
 class StockUpdate(object):
     def GET(self):
-        pass
+        inputs=web.input()
+        productid=inputs.get("productId",None)
+        productSKUs=inputs.get("productSKUs",None)
+        if not productid or not productSKUs:
+            return json.dumps({"msg":"参数错误","status":False})
+        
+        try:
+            productid=int(productid)
+            
+            #先调用smt接口更新，成功则更新本地
+            
+            
+            
+            coll=getattr(web.ctx.dbcontext,MONGODB['DB_SMT_COLL'])
+            data=coll.find_one({'smt_productId':productid})
+            if not data:
+                return json.dumps({"msg":"不存在productid=%s该条数据" % productid,"status":False})
+            
+            db_sku_data=copy.deepcopy(data['smt_productSKUs'])
+
+            productSKUs=json.loads(productSKUs)
+            
+            print "before update",productSKUs
+            for p_sku in productSKUs:
+                sku_proper=p_sku['aeopSKUProperty']
+                temp_sku_key=''
+                for i in sku_proper:
+                    temp_sku_key+=str(i['skuPropertyId'])+'_'+str(i['propertyValueId'])
+                    
+                for db_p_sku in db_sku_data:
+                    db_sku_proper=db_p_sku['aeopSKUProperty']
+                    temp_db_sku_key=''
+                    for i in db_sku_proper:
+                        temp_db_sku_key+=str(i['skuPropertyId'])+'_'+str(i['propertyValueId'])
+                    if temp_db_sku_key==temp_sku_key:
+                        db_p_sku['skuStock']=p_sku['skuStock']
+            
+            print "after update",db_sku_data
+            
+            coll.update({'smt_productId':productid},{'$set':{'smt_productSKUs':db_sku_data}})
+                    
+                    
+            
+            return json.dumps({"msg":"更新成功","status":True})
+        except Exception,e:
+            return json.dumps({"msg":"更新失败%s" % str(e),"status":False})
 
 
 
