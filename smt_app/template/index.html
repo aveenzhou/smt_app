@@ -22,11 +22,13 @@
 
 	.table_row{background-color:#EDF3FE!important;}
 	.table_row_odd{background-color:#f7f4f4;}
+	#main_tab th{text-align:center;}
 	#main_tab td{vertical-align:top;text-align:center;}
 	table#sku-table td.sku-image-td{position:relative;}
 	img.sku-image-large{display:block;z-index:100;position:absolute;left:50%;top:50%;border:2px solid #ddd;
 						box-shadow:-3px -2px 8px #B26A6A;}
 	
+	#status_bar{padding:5px;}
 	#link-edit{width: 60%;
 			z-index: 1026;
 			height: 115px;
@@ -42,7 +44,7 @@
 	.msglist button{padding:3px 5px;display:block;margin:5px auto;}
 	.link-confirm{display: block;margin: 5px auto;padding:3px 5px;}
 	
-	.blur{-webkit-filter:blur(2px);}
+	.blur{-webkit-filter:blur(3px);}
 	.blur2{-webkit-filter:blur(5px);}
 	#body_mask{
 		position: absolute;
@@ -62,6 +64,14 @@
 		width:32px;
 		height:32px;
 		display:none;
+	}
+	.isAlibAuth{
+		color:green;
+		background:url('/static/css/images/sc10211_2.png') no-repeat 95% center;
+	}
+	.noAlibAuth{
+		color:#000;
+		background:url('/static/css/images/sc10211_3.png') no-repeat 95% center;		
 	}
 	</style>
 </head>
@@ -91,7 +101,7 @@
 		
 		});
 		var sku_json=JSON.stringify(productSKUs);
-		alert(sku_json)
+		//alert(sku_json)
 		jq.ajax({
 			type:'GET',
 			url:'stock_update',
@@ -101,8 +111,15 @@
 			success:function(data){
 				jq("#load-pic").hide();
 				alert(data.msg);
-				jq("#body_mask").hide();
-				jq(".msglist").removeClass('blur2');
+				
+				if(data.ali_auth_url){
+					window.location.href=data.ali_auth_url;
+				}else{
+					jq("#body_mask").hide();
+					jq(".msglist").removeClass('blur2');
+					window.location.reload();
+				}
+				
 			},
 			error:function(XMLHttpRequest, textStatus, errorThrown){
 				jq("#load-pic").hide();
@@ -128,6 +145,7 @@
    <div style="height:100%;">
 	<div class="msglist">
 		<div class="tab_filter clearfix" style="position:relative;">
+				<div id="status_bar">USER: <span style="margin:0 3px;color:#333;">{{ user }}</span> <a href="/logout" style="margin-left:20px;text-decoration:underline;">Logout</a></div>
 				<table id="main_tab" >
 
 					<tr class="lsthead">
@@ -135,7 +153,11 @@
 						<th style="width:10%;">SMT ID  </th>
 						<th style="width:70px;">产品</th>
 						<th style="width:25%;">SMT 库存信信息</th>
-						<th style="width:10%;">同步</th>
+						{% if isAlibAuth %}
+						<th style="width:10%;" class='isAlibAuth'>同步</th>
+						{% else %}
+						<th style="width:10%;" class='noAlibAuth'>同步</th>
+						{% endif %}
 						<th style="width:15%;">外部链接</th>
 						<th>外部库存</th>
 						
@@ -185,8 +207,8 @@
 											{%set skuProperty=sku.aeopSKUProperty[0]%}
 											{%if skuProperty.skuImage%}
 											<td class="sku-image-td">
-												<img width="35"  src="{{skuProperty.skuImage|imageUrlFilter}}" class="sku-image">
-												<img style="display:none;" src="{{skuProperty.skuImage}}" alt="" class="sku-image-large" />
+												<img width="35"  src="{{skuProperty.skuImage|imageUrlFilter}}" bigpic="{{skuProperty.skuImage}}" class="sku-image">
+												<img style="display:none;" src="" alt="" class="sku-image-large" />
 											</td>
 											{%endif%}
 
@@ -239,9 +261,12 @@
 		</div>
 		<script type="text/javascript">
 			jq(function(){
-			
+				
 				jq('.sku-image').toggle(
 					function(){
+						//bigpic
+						var bigsrc=jq(this).attr('bigpic');
+						jq(this).next(".sku-image-large").attr('src',bigsrc);
 						jq(this).next(".sku-image-large").show();
 					},
 					function(){
@@ -286,9 +311,9 @@
 								jq("#"+link_id).attr("href",new_link);
 								jq("#"+link_id).text(new_link);
 							}
-							
-							alert("Tips:"+data.msg);
 							jq("#load-pic").hide();
+							alert("Tips:"+data.msg);
+							
 							jq("#body_mask").hide();
 							jq(".msglist").removeClass('blur');
 						},

@@ -1,0 +1,54 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+	<title></title>
+	<link rel="stylesheet" href="/static/css/style.css" />
+	<link rel="stylesheet" href="/static/css/jquery-ui.css" />
+</head>
+<body class="login">
+<div id="container">
+
+    <div id="header">
+       <div id="branding">
+        
+			<h1 id="site-name">Update SMT Stock V0.1</h1>
+
+        </div>
+    </div>
+
+    <div id="content" class="colM">
+        
+
+		<div id="content-main">
+			<form action="/login" method="post" id="login-form">
+			  <div class="form-row-l">
+				
+				<label for="id_username" class="required">USER:</label> <input id="id_username" type="text" name="username" maxlength="30">
+			  </div>
+			  <div class="form-row-l">
+				
+				<label for="id_password" class="required">PASSWORD:</label> <input type="password" name="password" id="id_password">
+
+			  </div>
+			  
+			  
+			  <div class="submit-row-l">
+				<label>&nbsp;</label><input type="submit" value="LOG IN">
+			  </div>
+			</form>
+
+			<script type="text/javascript">
+			document.getElementById('id_username').focus();
+			
+			
+			</script>
+		</div>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

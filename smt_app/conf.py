@@ -31,3 +31,6 @@ MONGODB={
             "IS_AUTH":True
          }
 ##########################
+USER="admin"
+PWD="admin1989"
+

@@ -14,13 +14,10 @@ import pymongo
 from gevent.pywsgi import WSGIServer
 from conf import *
 from smt_api import *
+from common import *
 
 
-def imageUrlFilter(url):
-    tmp=url.split('.')
-    f='.'.join(tmp[:-1])
-    b=tmp[-1]
-    return '.'.join([f,'summ',b])
+
 
 render = render_jinja(os.path.normpath(os.path.dirname(__file__) + '/template'), encoding='utf-8')
 render._lookup.filters['imageUrlFilter']=imageUrlFilter
@@ -59,11 +56,14 @@ urls=(
       '/index','Index',
       '/update_link','UpdateLink',
       '/stock_update','StockUpdate',
+      '/login','Login',
+      '/logout','Logout',
       '/test','Test'
       )
 
 
 class Test(object):
+    @checklogin
     def GET(self):
         if not web.config.get('token_data',None) or web.config.token_data.get('error',None):
             raise web.seeother(web.config.alibba_auth_url, absolute=True)
@@ -83,7 +83,7 @@ class Test(object):
                                    productId=id
                                    )
             dict_data=json.loads(p_info)
-            del dict_data['detail']
+#            del dict_data['detail']
             return dict_data
         
         if type=="products":
@@ -114,16 +114,20 @@ class Test(object):
             dict_data=json.loads(res_data)
             return res_data
         if stock and productid:
-            print stock
-            get_alidata_by_api(
+            stock=[{u'aeopSKUProperty': [{u'propertyValueId': 29, u'skuPropertyId': 14}], u'skuStock': False, 'skuPrice': u'11.00', 'skuCode': u''}, {u'aeopSKUProperty': [{u'propertyValueId': 193, u'skuPropertyId': 14}], u'skuStock': True, 'skuPrice': u'11.00', 'skuCode': u''}, {u'aeopSKUProperty': [{u'propertyValueId': 350850, u'skuPropertyId': 14}], u'skuStock': True, 'skuPrice': u'11.00', 'skuCode': u''}]
+            stock=json.dumps(stock)
+            
+            res_data=get_alidata_by_api(
                                "api.editProductCidAttIdSku",
                                access_token,
-                               productIds=productid,
+                               productId=productid,
                                productSkus=stock
                                )
-            
-
+            dict_data=json.loads(res_data)
+            return res_data
+        
 class Auth(object):
+    @checklogin
     def GET(self):        
         inputs=web.input()
         code=inputs.get("code",None)
@@ -147,14 +151,46 @@ class Auth(object):
             raise web.seeother('/index')
         
 
+class Login(object):
+    def GET(self):
+        if web.ctx.session.user and web.ctx.session.login:
+            raise web.seeother('/index')
         
+        web.ctx.session.kill()
+        return render.login(locals())
     
+    def POST(self):
+        inputs = web.input()
+        user = inputs.get('username', None)
+        pwd = inputs.get('password', None)
+        if  user and pwd:
+            if USER == user and PWD == pwd:
+                web.ctx.session.login = 1
+                web.ctx.session.user = user
+                return web.seeother('/index')
+            else:
+                web.ctx.session.kill()
+                return redirect_HTML("请输入正确的用户名和密码!", 3)
+
+        else:
+            web.ctx.session.kill()
+            return redirect_HTML("请输入用户名名或密码!", 3)
+
+class Logout(object):
+    def GET(self):
+        web.ctx.session.kill()
+        raise web.seeother('/login')
 
 class Index(object):
+    @checklogin
     def GET(self):
         coll=getattr(web.ctx.dbcontext,MONGODB['DB_SMT_COLL'])
         datas=coll.find()
-        return render.index(items=datas)
+        isAlibAuth=False
+        user=web.ctx.session.user
+        if web.config.get('token_data',None) and web.config.token_data.get('access_token',None):
+            isAlibAuth=True
+        return render.index(items=datas,isAlibAuth=isAlibAuth,user=user)
 
 class UpdateLink(object):
     def GET(self):
@@ -179,6 +215,10 @@ class UpdateLink(object):
 
 class StockUpdate(object):
     def GET(self):
+        if not web.config.get('token_data',None) or web.config.token_data.get('error',None):
+            return json.dumps({"msg":"同步SMT库存需要授权","status":False,'ali_auth_url':web.config.alibba_auth_url})
+        
+        access_token=web.config.token_data.access_token
         inputs=web.input()
         productid=inputs.get("productId",None)
         productSKUs=inputs.get("productSKUs",None)
@@ -188,14 +228,11 @@ class StockUpdate(object):
         try:
             productid=int(productid)
             
-            #先调用smt接口更新，成功则更新本地
-            
-            
-            
+            #先调用接口更新smt,再更新本地数据库
             coll=getattr(web.ctx.dbcontext,MONGODB['DB_SMT_COLL'])
             data=coll.find_one({'smt_productId':productid})
             if not data:
-                return json.dumps({"msg":"不存在productid=%s该条数据" % productid,"status":False})
+                return json.dumps({"msg":"不存在productid=%s该条数据" % productid,"status":False,"productid":productid})
             
             db_sku_data=copy.deepcopy(data['smt_productSKUs'])
 
@@ -215,20 +252,37 @@ class StockUpdate(object):
                         temp_db_sku_key+=str(i['skuPropertyId'])+'_'+str(i['propertyValueId'])
                     if temp_db_sku_key==temp_sku_key:
                         db_p_sku['skuStock']=p_sku['skuStock']
+                        p_sku['skuPrice']=db_p_sku['skuPrice']
+                        p_sku['skuCode']=db_p_sku['skuCode']
             
-            print "after update",db_sku_data
+            print "after update",productSKUs
             
+                    
+            productSKUs=json.dumps(productSKUs)
+            
+            res_data=get_alidata_by_api(
+                               "api.editProductCidAttIdSku",
+                               access_token,
+                               productId=productid,
+                               productSkus=productSKUs
+                               )
+            res_data=json.loads(res_data)
+            
+            if not res_data.get('success',None):
+                error= res_data['error_message'] if res_data.get('error_message',None) else res_data.get('exception','')
+                
+                return json.dumps({"msg":"更新失败:%s" % error,"status":False,"productid":productid})
+                 
             coll.update({'smt_productId':productid},{'$set':{'smt_productSKUs':db_sku_data}})
-                    
-                    
             
-            return json.dumps({"msg":"更新成功","status":True})
+            return json.dumps({"msg":"更新成功","status":True,"productid":productid})
         except Exception,e:
-            return json.dumps({"msg":"更新失败%s" % str(e),"status":False})
+            return json.dumps({"msg":"更新失败:%s" % str(e),"status":False,"productid":productid})
 
 
 
 def loadhook():
+    web.header('Content-type', "text/html; charset=utf-8")
     try:
         init_dbcontext()
     except Exception,e:
@@ -237,7 +291,15 @@ def loadhook():
 def unloadhook():
     release_dbcontext()
 
+def session_hook():
+    web.ctx.session=session
+
+web.config.session_parameters['timeout']=3600
+
 app = web.application(urls, globals())
+session=web.session.Session(app, web.session.DiskStore('sessions/'), initializer={'login': 0,'user':None})
+
+app.add_processor(web.loadhook(session_hook))
 app.add_processor(web.loadhook(loadhook))
 app.add_processor(web.unloadhook(unloadhook))
 application=app.wsgifunc()

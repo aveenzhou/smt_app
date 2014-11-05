@@ -32,7 +32,7 @@ body{position:relative;}
 .addmsgbar a.addmsg{float:right;margin-right:30px;color:#333;padding:1px 5px;;background:#999;color:#fff;border-radius:8px;}
 .addmsgbar a.addmsg span{width:16px;height:16px;margin-top:3px;vertical-align:bottom;display:inline-block;background: url(images/ui-icons_454545_256x240.png) left -192px no-repeat}
 .msglist{padding:0px;margin:0px;}
-.msglist table {border-collapse:collapse;width:100%;margin:0px;}
+.msglist table {border-collapse:collapse;width:100%;margin:0px;background:#fff;}
 .msglist table tr.lsthead{background:url(images/nav-bg.gif) repeat-x;}
 .msglist table tr td{word-wrap:break-word;white-space:normal;word-break:break-all ;}
 .msglist table tr th{white-space:nowrap;}
@@ -143,8 +143,8 @@ form {
     margin: 0;
     padding: 0;
 }
-body.login {
-    background: #eee;
+body {
+    background:#eee url(images/furley_bg.png);
 }
 
 .login #container {
@@ -154,7 +154,7 @@ body.login {
     min-width: 300px;
     margin-left: auto;
     margin-right: auto;
-    margin-top: 15%;
+    margin-top: 10%;
 }
 #header {
     background: #417690;
@@ -174,7 +174,6 @@ body.login {
 margin: 10px 15px;
 }
 #content-main {
-    float: left;
     width: 100%;
 }
 .login #content-main {
@@ -212,7 +211,7 @@ margin: 10px 15px;
 
 .login .submit-row-l {
     clear: both;
-    padding: 1em 0 0 9.4em;
+    padding: 5px 0 0 110px;
 }
 .login .submit-row-l input{
 	width:80px;
