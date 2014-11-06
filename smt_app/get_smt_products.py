@@ -5,8 +5,8 @@ Created on 2014-11-1
 @author: aveenzhou
 '''
 import web
-from conf import *
-from smt_api import *
+from common.conf import *
+from common.smt_api import *
 from main import init_dbcontext,release_dbcontext
 
 

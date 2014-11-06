@@ -4,6 +4,8 @@ Created on 2014-10-24
 
 @author: Administrator
 '''
+import sys
+sys.path.append("F:\webroot\python_webapp\smt_app") #only run for in apache
 import os
 import urllib3
 import json
@@ -11,10 +13,10 @@ import copy
 import web
 
 import pymongo
-from gevent.pywsgi import WSGIServer
-from conf import *
-from smt_api import *
-from common import *
+#from gevent.pywsgi import WSGIServer
+from common.conf import *
+from common.smt_api import *
+from common.common import *
 
 
 
@@ -52,6 +54,7 @@ def release_dbcontext():
 
 
 urls=(
+      '/','redirect login',
       '/auth','Auth',
       '/index','Index',
       '/update_link','UpdateLink',
@@ -163,14 +166,17 @@ class Login(object):
         inputs = web.input()
         user = inputs.get('username', None)
         pwd = inputs.get('password', None)
-        if  user and pwd:
-            if USER == user and PWD == pwd:
-                web.ctx.session.login = 1
-                web.ctx.session.user = user
-                return web.seeother('/index')
+        if user and pwd:
+            if user in USER.keys():
+                if USER.get(user)['password']==pwd:
+                    web.ctx.session.login = 1
+                    web.ctx.session.user = user
+                    return web.seeother('/index')
+                else:
+                    return redirect_HTML("请输入正确的密码!", 3)
             else:
                 web.ctx.session.kill()
-                return redirect_HTML("请输入正确的用户名和密码!", 3)
+                return redirect_HTML("请输入正确的用户名!", 3)
 
         else:
             web.ctx.session.kill()
@@ -187,10 +193,13 @@ class Index(object):
         coll=getattr(web.ctx.dbcontext,MONGODB['DB_SMT_COLL'])
         datas=coll.find()
         isAlibAuth=False
-        user=web.ctx.session.user
+        user_proper={}
+        user_proper["user"]=web.ctx.session.user
+        user_proper["role"]=USER.get(user_proper["user"])['role']
+        
         if web.config.get('token_data',None) and web.config.token_data.get('access_token',None):
             isAlibAuth=True
-        return render.index(items=datas,isAlibAuth=isAlibAuth,user=user)
+        return render.index(items=datas,isAlibAuth=isAlibAuth,user=user_proper)
 
 class UpdateLink(object):
     def GET(self):

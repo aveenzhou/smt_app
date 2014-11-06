@@ -145,7 +145,7 @@
    <div style="height:100%;">
 	<div class="msglist">
 		<div class="tab_filter clearfix" style="position:relative;">
-				<div id="status_bar">USER: <span style="margin:0 3px;color:#333;">{{ user }}</span> <a href="/logout" style="margin-left:20px;text-decoration:underline;">Logout</a></div>
+				<div id="status_bar">USER: <span style="margin:0 3px;color:#333;">{{ user.user }}</span> <a href="/logout" style="margin-left:20px;text-decoration:underline;">Logout</a></div>
 				<table id="main_tab" >
 
 					<tr class="lsthead">
@@ -231,12 +231,19 @@
 								</table>
 							</td>
 							
-							<td>
+							<td>{% if user.role %}
 								<button class="syn_sku" onClick="update({{item.smt_productId}});">同步库存到SMT</button>
+								{% else %}
+								<button class="syn_sku" onClick="update({{item.smt_productId}});" disabled>同步库存到SMT</button>
+								{% endif %}
 							</td>
 							<td>
 								{% if item.taobao_link %}
-								<a class="tb_link" href="{{ item.taobao_link }}" id="link_{{ item.smt_productId }}" target="_blank">{{ item.taobao_link }}</a>
+									{% if user.role %}
+									<a class="tb_link" href="{{ item.taobao_link }}" id="link_{{ item.smt_productId }}" target="_blank">{{ item.taobao_link }}</a>
+									{% else %}
+									<a class="tb_link" href="javascript:void(0);"  id="link_{{ item.smt_productId }}" target="_blank">你么有权限查看该内容</a>
+									{% endif %}
 								<button class="update_link">更改</button>
 								{%else%}
 								<a class="tb_link" href="#" id="link_{{ item.smt_productId }}" target="_blank">Null</a>
@@ -257,7 +264,11 @@
 			<p style="text-align:left;padding-left:20px;">链接编号:<span id="link_id" ></span></p>
 			<span style="position:absolute;right:5px;top:5px;width:10px;height:10px;display:block;cursor:pointer;">X</span>
 			<textarea id="link-text" name=""  cols="50" rows="5"></textarea>
+			{% if user.role %}
 			<button class="link-confirm">确定</button>
+			{% else %}
+			<button class="link-confirm" disabled>确定</button>
+			{% endif %}
 		</div>
 		<script type="text/javascript">
 			jq(function(){
