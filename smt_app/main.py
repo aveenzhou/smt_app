@@ -247,7 +247,7 @@ class StockUpdate(object):
 
             productSKUs=json.loads(productSKUs)
             
-            print "before update",productSKUs
+#            print "before update",productSKUs
             for p_sku in productSKUs:
                 sku_proper=p_sku['aeopSKUProperty']
                 temp_sku_key=''
@@ -264,7 +264,7 @@ class StockUpdate(object):
                         p_sku['skuPrice']=db_p_sku['skuPrice']
                         p_sku['skuCode']=db_p_sku['skuCode']
             
-            print "after update",productSKUs
+#            print "after update",productSKUs
             
                     
             productSKUs=json.dumps(productSKUs)
@@ -279,8 +279,8 @@ class StockUpdate(object):
             
             if not res_data.get('success',None):
                 error= res_data['error_message'] if res_data.get('error_message',None) else res_data.get('exception','')
-                
-                return json.dumps({"msg":"更新失败:%s" % error,"status":False,"productid":productid})
+
+                return json.dumps({"msg":"更新失败:%s" % str(error),"status":False,"productid":productid})
                  
             coll.update({'smt_productId':productid},{'$set':{'smt_productSKUs':db_sku_data}})
             
