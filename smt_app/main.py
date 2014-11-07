@@ -6,9 +6,7 @@ Created on 2014-10-24
 '''
 import sys
 import os
-curdir=os.getcwd()
-sys.path.append(curdir) #only running for in apache 
-
+sys.path.append(os.path.dirname(__file__))#only running for in apache 
 import urllib3
 import json
 import copy
