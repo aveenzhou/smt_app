@@ -168,7 +168,11 @@
 						<tr  {%if loop.index%2==0 %}class='lstitem table_row_odd' {%else%}class="lstitem"{%endif%}>
 							<td >{{loop.index}}</td>
 							<td >{{item.smt_productId}}</td>	
-							<td ><img width="70" src="{{item.image_url|imageUrlFilter}}" alt="" /></td>
+							<td >
+								<a class='edit_link' href="http://posting.aliexpress.com/wsproduct/edit_wholesale_product.htm?productId={{ item.smt_productId }}" target='_blank'>
+								<img width="70" title="去SMT编辑" src="{{item.image_url|imageUrlFilter}}" alt="" />
+								</a>
+							</td>
 							<td>
 								<table id="sku-table" class="table-list-{{ item.smt_productId }}" >
 									<thead>
@@ -327,6 +331,7 @@
 							
 							jq("#body_mask").hide();
 							jq(".msglist").removeClass('blur');
+							jq("#"+link_id).focus();
 						},
 						error:function(XMLHttpRequest, textStatus, errorThrown){
 							jq("#load-pic").hide();
