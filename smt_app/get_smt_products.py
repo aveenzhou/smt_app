@@ -51,9 +51,11 @@ class SMTProducts(object):
         
         tmp_data_lst=[]
         dict_data=json.loads(res_data)
+        
         if not dict_data.get('success',None):
+            print dict_data
             print "调用api.findProductInfoListQuery接口失败"
-
+            return 
         web.cache.total_page=dict_data['totalPage']
         tmp_data_lst.extend(dict_data['aeopAEProductDisplayDTOList'])
         

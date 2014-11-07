@@ -5,8 +5,10 @@ Created on 2014-10-24
 @author: Administrator
 '''
 import sys
-sys.path.append("F:\webroot\python_webapp\smt_app") #only run for in apache
 import os
+curdir=os.getcwd()
+sys.path.append(curdir) #only running for in apache 
+
 import urllib3
 import json
 import copy
@@ -143,14 +145,16 @@ class Auth(object):
         if web.config.token_data.get('error',None):
             raise web.seeother(web.config.alibba_auth_url, absolute=True)
         else:
-            token_coll=getattr(web.ctx.dbcontext,MONGODB['DB_TOKEN_COLL'])
-            tokened=list(token_coll.find())
-            if not tokened:
-                token_coll.insert(token_data)
-            else:
-                _id=tokened[0]['_id']
-                token_coll.update({'_id':_id},token_data)
-            
+            try:
+                token_coll=getattr(web.ctx.dbcontext,MONGODB['DB_TOKEN_COLL'])
+                tokened=list(token_coll.find())
+                if not tokened:
+                    token_coll.insert(token_data)
+                else:
+                    _id=tokened[0]['_id']
+                    token_coll.update({'_id':_id},token_data)
+            except Exception,e:
+                pass
             raise web.seeother('/index')
         
 
@@ -190,8 +194,12 @@ class Logout(object):
 class Index(object):
     @checklogin
     def GET(self):
-        coll=getattr(web.ctx.dbcontext,MONGODB['DB_SMT_COLL'])
-        datas=coll.find()
+        try:
+            coll=getattr(web.ctx.dbcontext,MONGODB['DB_SMT_COLL'])
+            datas=coll.find()
+        except Exception,e:
+            print "mongo error",e
+            datas=[]
         isAlibAuth=False
         user_proper={}
         user_proper["user"]=web.ctx.session.user
@@ -279,8 +287,10 @@ class StockUpdate(object):
             
             if not res_data.get('success',None):
                 error= res_data['error_message'] if res_data.get('error_message',None) else res_data.get('exception','')
-
-                return json.dumps({"msg":"更新失败:%s" % str(error),"status":False,"productid":productid})
+                error_data={"msg":"更新失败:%s" % str(error),"status":False,"productid":productid}
+                if res_data.get('error_code',None)=='401':
+                    error_data['ali_auth_url']=web.config.alibba_auth_url
+                return json.dumps(error_data)
                  
             coll.update({'smt_productId':productid},{'$set':{'smt_productSKUs':db_sku_data}})
             
