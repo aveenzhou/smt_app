@@ -257,7 +257,7 @@ class StockUpdate(object):
 
             productSKUs=json.loads(productSKUs)
             
-#            print "before update",productSKUs
+            print "before update",productSKUs
             for p_sku in productSKUs:
                 sku_proper=p_sku['aeopSKUProperty']
                 temp_sku_key=''
@@ -274,7 +274,7 @@ class StockUpdate(object):
                         p_sku['skuPrice']=db_p_sku['skuPrice']
                         p_sku['skuCode']=db_p_sku['skuCode']
             
-#            print "after update",productSKUs
+            print "after update",productSKUs
             
                     
             productSKUs=json.dumps(productSKUs)

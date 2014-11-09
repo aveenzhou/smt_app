@@ -86,7 +86,15 @@
 			jq(this).find('td.sku_proper').each(function(){
 				var skuPropertyId=parseInt(jq(this).attr("skuproperid"));
 				var propertyValueId=parseInt(jq(this).attr("propervalid"));
-				sku_propert_item['aeopSKUProperty'].push({"skuPropertyId":skuPropertyId,"propertyValueId":propertyValueId});
+				if(jq(this).attr('name')=="propertyValueDefinitionName"){
+					var propertyValueDefinitionName=jq(this).text();
+				}
+				
+				
+				sku_propert_item['aeopSKUProperty'].push({"skuPropertyId":skuPropertyId,
+														  "propertyValueId":propertyValueId,
+														  "propertyValueDefinitionName":propertyValueDefinitionName
+														  });
 			
 			});
 			var stock=jq(this).find(".sku_stock").val();
@@ -252,9 +260,9 @@ function add_product(){
 											
 												
 												{%if sku_proper.propertyValueDefinitionName %}
-												<td class="sku_proper" skuproperid="{{ sku_proper.skuPropertyId}}" propervalid="{{ sku_proper.propertyValueId }}">{{sku_proper.propertyValueDefinitionName}}</td>
+												<td class="sku_proper" name="propertyValueDefinitionName" skuproperid="{{ sku_proper.skuPropertyId}}" propervalid="{{ sku_proper.propertyValueId }}">{{sku_proper.propertyValueDefinitionName}}</td>
 												{% else %}
-												<td class="sku_proper" skuproperid="{{ sku_proper.skuPropertyId}}" propervalid="{{ sku_proper.propertyValueId }}">{{sku_proper.propertyValueIdName_en}}</td>
+												<td class="sku_proper" name="en" skuproperid="{{ sku_proper.skuPropertyId}}" propervalid="{{ sku_proper.propertyValueId }}">{{sku_proper.propertyValueIdName_en}}</td>
 												{% endif %}
 											{% endfor %}
 											
