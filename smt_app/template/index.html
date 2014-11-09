@@ -28,7 +28,7 @@
 	img.sku-image-large{display:block;z-index:100;position:absolute;left:50%;top:50%;border:2px solid #ddd;
 						box-shadow:-3px -2px 8px #B26A6A;}
 	
-	#status_bar{padding:5px;}
+	#status_bar{padding:10px;position:relative;}
 	#link-edit{width: 60%;
 			z-index: 1026;
 			height: 115px;
@@ -73,6 +73,7 @@
 		color:#000;
 		background:url('/static/css/images/sc10211_3.png') no-repeat 95% center;		
 	}
+	.head_add{width:200px;height:100px;position:absolute;right:10px;top:2px;}
 	</style>
 </head>
 <script type="text/javascript">
@@ -173,6 +174,12 @@
 		jq("#load-pic").show();
 	
 	};
+	
+function add_product(){
+	var p_id=jq("#add_id").val();
+	update_product(p_id);
+	
+}
 </script>
 
 <body >
@@ -181,7 +188,9 @@
    <div style="height:100%;">
 	<div class="msglist">
 		<div class="tab_filter clearfix" style="position:relative;">
-				<div id="status_bar">USER: <span style="margin:0 3px;color:#333;">{{ user.user }}</span> <a href="/logout" style="margin-left:20px;text-decoration:underline;">Logout</a></div>
+				<div id="status_bar">USER: <span style="margin:0 3px;color:#333;">{{ user.user }}</span> <a href="/logout" style="margin-left:20px;text-decoration:underline;">Logout</a>
+					<span class="head_add"><input type="text" name="" id="add_id" /><button style="display:inline-block;margin-left:5px;" onclick="add_product();">添加</button></span>
+				</div>
 				<table id="main_tab" >
 
 					<tr class="lsthead">
