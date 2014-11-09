@@ -1,5 +1,5 @@
-#Thu Nov 06 17:09:42 CST 2014
 eclipse.preferences.version=1
+encoding//common/common.py=utf-8
 encoding//common/conf.py=utf-8
 encoding//common/smt_api.py=utf-8
 encoding/get_smt_products.py=utf-8

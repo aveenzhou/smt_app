@@ -135,8 +135,44 @@
 		jq(".msglist").addClass('blur2');
 		jq("#body_mask").show();
 		jq("#load-pic").show();
-	}
+	};
 
+	function update_product(p_id){
+		jq.ajax({
+				type:'GET',
+				url:'product_update',
+				data:{"productId":p_id},
+				dataType:'json',
+				timeout:30000,
+				success:function(data){
+					jq("#load-pic").hide();
+					alert(data.msg);
+					
+					if(data.ali_auth_url){
+						window.location.href=data.ali_auth_url;
+					}else{
+						jq("#body_mask").hide();
+						jq(".msglist").removeClass('blur2');
+						window.location.reload();
+					}
+				},
+				error:function(XMLHttpRequest, textStatus, errorThrown){
+					jq("#load-pic").hide();
+					jq("#body_mask").hide();
+					jq(".msglist").removeClass('blur2');
+					if (XMLHttpRequest.status==200){
+						alert("Tips:update error,"+textStatus+","+errorThrown);
+					}else{
+						alert("Tips:update error,"+XMLHttpRequest.statusText+":"+XMLHttpRequest.status);
+					}	
+				}
+			});
+		
+		jq(".msglist").addClass('blur2');
+		jq("#body_mask").show();
+		jq("#load-pic").show();
+	
+	};
 </script>
 
 <body >
@@ -171,7 +207,12 @@
 							<td >
 								<a class='edit_link' href="http://posting.aliexpress.com/wsproduct/edit_wholesale_product.htm?productId={{ item.smt_productId }}" target='_blank'>
 								<img width="70" title="去SMT编辑" src="{{item.image_url|imageUrlFilter}}" alt="" />
-								</a>
+								</a><br/>
+								{% if user.role %}
+								<button onclick="update_product({{item.smt_productId}});">获取更新</button>
+								{% else %}
+								<button onclick="update_product({{item.smt_productId}});" disabled>获取更新</button>
+								{% endif %}
 							</td>
 							<td>
 								<table id="sku-table" class="table-list-{{ item.smt_productId }}" >
