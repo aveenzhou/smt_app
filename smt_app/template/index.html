@@ -89,11 +89,14 @@
 				if(jq(this).attr('name')=="propertyValueDefinitionName"){
 					var propertyValueDefinitionName=jq(this).text();
 				}
-				
+				if(jq(this).attr('img_addr')){
+					var skuImage=jq(this).attr('img_addr');
+				}
 				
 				sku_propert_item['aeopSKUProperty'].push({"skuPropertyId":skuPropertyId,
 														  "propertyValueId":propertyValueId,
-														  "propertyValueDefinitionName":propertyValueDefinitionName
+														  "propertyValueDefinitionName":propertyValueDefinitionName,
+														  "skuImage":skuImage
 														  });
 			
 			});
@@ -260,9 +263,9 @@ function add_product(){
 											
 												
 												{%if sku_proper.propertyValueDefinitionName %}
-												<td class="sku_proper" name="propertyValueDefinitionName" skuproperid="{{ sku_proper.skuPropertyId}}" propervalid="{{ sku_proper.propertyValueId }}">{{sku_proper.propertyValueDefinitionName}}</td>
+												<td class="sku_proper" name="propertyValueDefinitionName" img_addr="{{sku_proper.skuImage}}" skuproperid="{{ sku_proper.skuPropertyId}}" propervalid="{{ sku_proper.propertyValueId }}">{{sku_proper.propertyValueDefinitionName}}</td>
 												{% else %}
-												<td class="sku_proper" name="en" skuproperid="{{ sku_proper.skuPropertyId}}" propervalid="{{ sku_proper.propertyValueId }}">{{sku_proper.propertyValueIdName_en}}</td>
+												<td class="sku_proper" name="en" img_addr="{{sku_proper.skuImage}}" skuproperid="{{ sku_proper.skuPropertyId}}" propervalid="{{ sku_proper.propertyValueId }}">{{sku_proper.propertyValueIdName_en}}</td>
 												{% endif %}
 											{% endfor %}
 											
