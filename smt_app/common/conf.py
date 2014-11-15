@@ -16,6 +16,11 @@ APP_SECRET="PUpMcxJ5om"
 TOKEN_URL="https://gw.api.alibaba.com/openapi/http/1/system.oauth2/getToken/"+APP_KEY
 LOCAL_APP_URL="http://127.0.0.1:8080/auth"
 
+PRODUCT_STATE={'onSelling':'上架',
+               'offline':'下架',
+               'auditing':'审核中',
+               'editingRequired':'审核不通过'
+               }
 ###################
 MONGODB={
 #            "DB_SERVER":'10.20.14.196',

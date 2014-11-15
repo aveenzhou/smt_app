@@ -62,7 +62,8 @@ urls=(
       '/index','Index',
       '/update_link','UpdateLink',
       '/stock_update','StockUpdate',
-      '/product_update','ProductDate',
+      '/product_update','ProductUpdate',
+      '/product_offline','ProductOffline',
       '/login','Login',
       '/logout','Logout',
       '/test','Test'
@@ -80,9 +81,18 @@ class Test(object):
         cateid=inputs.get('cateid',None)
         productid=inputs.get('productid',None)
         stock=inputs.get('stock',None)
-        
+        offid=inputs.get('offid',None)
         access_token=web.config.token_data.access_token
         web.header('Content-type', 'text/html;charset=utf-8')
+        
+        if offid:
+            res_data=get_alidata_by_api(
+                               "api.offlineAeProduct",
+                               access_token,
+                               productIds=offid
+                               )
+            return res_data
+        
         if id:
             p_info=get_alidata_by_api(
                                    "api.findAeProductById",
@@ -302,7 +312,7 @@ class StockUpdate(object):
         
         
 
-class ProductDate(object):
+class ProductUpdate(object):
     def GET(self):
         if not web.config.get('token_data',None) or web.config.token_data.get('error',None):
             return json.dumps({"msg":"更新产品需要授权","status":False,'ali_auth_url':web.config.alibba_auth_url})
@@ -318,7 +328,17 @@ class ProductDate(object):
             p_info=self._get_product_byid(productid)
             
             if not p_info.get('success',None):
-                return self.get_error_msg(p_info,productid)
+                return get_error_msg(p_info,productid)
+            
+            p_states=PRODUCT_STATE.keys()
+            p_states.remove('onSelling')
+            noSelling=p_states
+
+            if p_info['productStatusType'] in noSelling:
+                res= {"msg":"产品%s处于%s" % (productid,PRODUCT_STATE.get(p_info['productStatusType'],p_info['productStatusType'])),
+                        "status":False,
+                        "productid":productid}
+                return json.dumps(res)
             
             temp={}
             temp['smt_productId']=productid
@@ -328,7 +348,7 @@ class ProductDate(object):
             cateid=p_info['categoryId']
             atrrs=self._get_attr_by_cateid(cateid)
             if not atrrs.get('success',None):
-                return self.get_error_msg(atrrs,productid)
+                return get_error_msg(atrrs,productid)
             
             atrrs_lst=atrrs['attributes']
             
@@ -425,13 +445,59 @@ class ProductDate(object):
         return json_data
 
     
-    def get_error_msg(self,res_data,productid):
-        error= res_data['error_message'] if res_data.get('error_message',None) else res_data.get('exception','')
-        error_data={"msg":"操作失败:%s" % str(error),"status":False,"productid":productid}
-        if res_data.get('error_code',None)=='401':
-            error_data['ali_auth_url']=web.config.alibba_auth_url
-        return json.dumps(error_data)
-    
+
+
+class ProductOffline(object):
+    def GET(self):
+        
+        
+        inputs=web.input()
+        p_id=inputs.get("productId",None)
+        if not p_id:
+            return json.dumps({"msg":"参数错误","status":False})
+        
+        if not web.config.get('token_data',None) or web.config.token_data.get('error',None):
+            return json.dumps({"msg":"操作需要授权","status":False,'ali_auth_url':web.config.alibba_auth_url})
+        self.access_token=web.config.token_data.access_token
+        try:
+            p_id=int(p_id)
+            coll=getattr(web.ctx.dbcontext,MONGODB['DB_SMT_COLL'])
+            is_db_exist=coll.find_one({'smt_productId':p_id})
+            if not is_db_exist:
+                return json.dumps({"msg":"产品%s下架成功" % p_id,"status":True,"productid":p_id})
+            
+            res_data=get_alidata_by_api(
+                               "api.offlineAeProduct",
+                               self.access_token,
+                               productIds=p_id
+                               )
+            json_data=json.loads(res_data)
+            
+            error_code=json_data.get('error_code',None)
+            error_code=str(error_code)
+            if error_code and error_code in ('12001024','12001026'):
+                #12001024    根据id查找不到对应的产品
+                #12001026    所有传入产品id的产品都在下架状态
+                coll.remove({'smt_productId':p_id})
+                return json.dumps({"msg":json_data['error_message'],"status":True,"productid":p_id})
+            
+            if error_code and error_code in ('12001030','12001025'):
+                #12001030    传入的产品有在活动中的，不能操作
+                #12001025    根据id查找到的产品不归属于该用户
+                return json.dumps({"msg":"操作失败:%s" % json_data['error_message'],"status":False,"productid":p_id})
+            
+            if not json_data.get('success',None):
+
+                return get_error_msg(json_data,p_id)
+            
+            coll.remove({'smt_productId':p_id})
+            return json.dumps({"msg":"产品%s下架成功" % p_id,"status":True,"productid":p_id})
+            
+        except Exception,e:
+            return json.dumps({"msg":"操作失败:%s" % str(e),"status":False,"productid":p_id})
+            
+
+
 def loadhook():
     web.header('Content-type', "text/html; charset=utf-8")
     try:

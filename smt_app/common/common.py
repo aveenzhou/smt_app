@@ -5,6 +5,7 @@ Created on 2014-11-5
 @author: Administrator
 '''
 import web
+import json
 
 def imageUrlFilter(url):
     tmp=url.split('.')
@@ -40,5 +41,19 @@ def checklogin(func):
         return func(*args,**kwargs)
         
     return wraper
+
+
+
+def get_error_msg(res_data,productid):
+    '''构造SMT API返回结果的错误信息'''
     
+    error= res_data['error_message'] if res_data.get('error_message',None) else res_data.get('exception','')
+    error_data={"msg":"操作失败:%s" % str(error),"status":False,"productid":productid}
+    if res_data.get('error_code',None)=='401':
+        error_data['ali_auth_url']=web.config.alibba_auth_url
+    return json.dumps(error_data)
+
+
+
+
             

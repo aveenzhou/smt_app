@@ -26,7 +26,7 @@
 	#main_tab td{vertical-align:top;text-align:center;}
 	table#sku-table td.sku-image-td{position:relative;}
 	img.sku-image-large{display:block;z-index:100;position:absolute;left:50%;top:50%;border:2px solid #ddd;
-						box-shadow:-3px -2px 8px #B26A6A;}
+						box-shadow:0px 0px 20px #B26A6A;}
 	
 	#status_bar{padding:10px;position:relative;}
 	#link-edit{width: 60%;
@@ -129,7 +129,9 @@
 				}else{
 					jq("#body_mask").hide();
 					jq(".msglist").removeClass('blur2');
-					window.location.reload();
+					if (data.status){
+							window.location.reload();
+					}
 				}
 				
 			},
@@ -165,7 +167,9 @@
 					}else{
 						jq("#body_mask").hide();
 						jq(".msglist").removeClass('blur2');
-						window.location.reload();
+						if (data.status){
+							window.location.reload();
+						}
 					}
 				},
 				error:function(XMLHttpRequest, textStatus, errorThrown){
@@ -191,6 +195,48 @@ function add_product(){
 	update_product(p_id);
 	
 }
+
+function offline(p_id){
+		jq.ajax({
+				type:'GET',
+				url:'product_offline',
+				data:{"productId":p_id},
+				dataType:'json',
+				timeout:30000,
+				success:function(data){
+					jq("#load-pic").hide();
+					alert(data.msg);
+					
+					if(data.ali_auth_url){
+						window.location.href=data.ali_auth_url;
+					}else{
+						jq("#body_mask").hide();
+						jq(".msglist").removeClass('blur2');
+						if (data.status){
+							//window.location.reload();
+							
+							jq("#"+p_id).remove();
+						}
+					}
+				},
+				error:function(XMLHttpRequest, textStatus, errorThrown){
+					jq("#load-pic").hide();
+					jq("#body_mask").hide();
+					jq(".msglist").removeClass('blur2');
+					if (XMLHttpRequest.status==200){
+						alert("Tips:update error,"+textStatus+","+errorThrown);
+					}else{
+						alert("Tips:update error,"+XMLHttpRequest.statusText+":"+XMLHttpRequest.status);
+					}	
+				}
+			});
+		
+		jq(".msglist").addClass('blur2');
+		jq("#body_mask").show();
+		jq("#load-pic").show();
+
+}
+
 </script>
 
 <body >
@@ -207,7 +253,7 @@ function add_product(){
 					<tr class="lsthead">
 						<th style="width:3%;">#</th>
 						<th style="width:10%;">SMT ID  </th>
-						<th style="width:70px;">产品</th>
+						<th style="width:80px;">产品</th>
 						<th style="width:25%;">SMT 库存信信息</th>
 						{% if isAlibAuth %}
 						<th style="width:10%;" class='isAlibAuth'>同步</th>
@@ -221,7 +267,7 @@ function add_product(){
 
 						{%for item in items%}
 						
-						<tr  {%if loop.index%2==0 %}class='lstitem table_row_odd' {%else%}class="lstitem"{%endif%}>
+						<tr  {%if loop.index%2==0 %}class='lstitem table_row_odd' {%else%}class="lstitem"{%endif%} id="{{item.smt_productId}}">
 							<td >{{loop.index}}</td>
 							<td >{{item.smt_productId}}</td>	
 							<td >
@@ -229,9 +275,11 @@ function add_product(){
 								<img width="70" title="去SMT编辑" src="{{item.image_url|imageUrlFilter}}" alt="" />
 								</a><br/>
 								{% if user.role %}
-								<button onclick="update_product({{item.smt_productId}});">获取更新</button>
+								<button onclick="update_product({{item.smt_productId}});">获取更新</button><br/>
+								<button onclick="offline({{item.smt_productId}})">下架&删除</button>
 								{% else %}
-								<button onclick="update_product({{item.smt_productId}});" disabled>获取更新</button>
+								<button onclick="update_product({{item.smt_productId}});" disabled>获取更新</button><br/>
+								<button onclick="offline({{item.smt_productId}})" disabled>下架&删除</button>
 								{% endif %}
 							</td>
 							<td>
