@@ -7,6 +7,8 @@ Created on 2014-10-24
 import sys
 import os
 sys.path.append(os.path.dirname(__file__))#only running for in apache 
+import traceback
+
 import urllib3
 import json
 import copy
@@ -243,7 +245,7 @@ class UpdateLink(object):
 
 
 class StockUpdate(object):
-    def GET(self):
+    def POST(self):
         if not web.config.get('token_data',None) or web.config.token_data.get('error',None):
             return json.dumps({"msg":"同步SMT库存需要授权","status":False,'ali_auth_url':web.config.alibba_auth_url})
         
@@ -267,7 +269,7 @@ class StockUpdate(object):
 
             productSKUs=json.loads(productSKUs)
             
-            print "before update",productSKUs
+#            print "before update",productSKUs
             for p_sku in productSKUs:
                 sku_proper=p_sku['aeopSKUProperty']
                 temp_sku_key=''
@@ -284,7 +286,7 @@ class StockUpdate(object):
                         p_sku['skuPrice']=db_p_sku['skuPrice']
                         p_sku['skuCode']=db_p_sku['skuCode']
             
-            print "after update",productSKUs
+#            print "after update",productSKUs
             
                     
             productSKUs=json.dumps(productSKUs)
@@ -292,9 +294,10 @@ class StockUpdate(object):
             res_data=get_alidata_by_api(
                                "api.editProductCidAttIdSku",
                                access_token,
-                               productId=productid,
+                               productId=str(productid),
                                productSkus=productSKUs
                                )
+            
             res_data=json.loads(res_data)
             
             if not res_data.get('success',None):
@@ -308,6 +311,7 @@ class StockUpdate(object):
             
             return json.dumps({"msg":"更新成功","status":True,"productid":productid})
         except Exception,e:
+            print traceback.format_exc()
             return json.dumps({"msg":"更新失败:%s" % str(e),"status":False,"productid":productid})
         
         
@@ -325,7 +329,7 @@ class ProductUpdate(object):
         
         try:
             productid=int(productid)
-            p_info=self._get_product_byid(productid)
+            p_info=self._get_product_byid(str(productid))
             
             if not p_info.get('success',None):
                 return get_error_msg(p_info,productid)
@@ -362,7 +366,7 @@ class ProductUpdate(object):
                         sku_p['skuPropertyIdName_en']=skuPropertyIdName_en
                         sku_p['propertyValueIdName_en']=propertyValueIdName_en
             
-            tbdata=self._get_taobaolinkbyId(productid)
+            tbdata=self._get_taobaolinkbyId(str(productid))
             if isinstance(tbdata, list) and tbdata:
                 link=tbdata[0].get('detailUrl',None)
                 temp['taobao_link']= link
@@ -379,6 +383,8 @@ class ProductUpdate(object):
 #                print "Update a Data:",temp
                 return json.dumps({"msg":"更新成功","status":True,"productid":productid})
         except Exception,e:
+            print traceback.format_exc()
+
             return json.dumps({"msg":"操作失败:%s" % str(e),"status":False,"productid":productid})
         
     def _get_product_byid(self,p_id):
@@ -469,7 +475,7 @@ class ProductOffline(object):
             res_data=get_alidata_by_api(
                                "api.offlineAeProduct",
                                self.access_token,
-                               productIds=p_id
+                               productIds=str(p_id)
                                )
             json_data=json.loads(res_data)
             

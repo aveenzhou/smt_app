@@ -115,7 +115,7 @@
 		var sku_json=JSON.stringify(productSKUs);
 		//alert(sku_json)
 		jq.ajax({
-			type:'GET',
+			type:'POST',
 			url:'stock_update',
 			data:{"productSKUs":sku_json,"productId":p_id},
 			dataType:'json',

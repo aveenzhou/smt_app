@@ -96,7 +96,7 @@ def get_alidata_by_api(api_name,
     req_args['_aop_signature']=create_sign_str()
     
     req_url='/'.join((OPEN_API_URL,urlPath))
-    res=http.request('GET',req_url,req_args)
+    res=http.request('POST',req_url,req_args)#POST GET有长度限制
     data=res.data
     
     return data
