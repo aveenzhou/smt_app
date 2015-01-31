@@ -1,0 +1,102 @@
+						{%for item in items%}
+						
+						<tr  {%if loop.index%2==0 %}class='lstitem table_row_odd' {%else%}class="lstitem"{%endif%} id="{{item.smt_productId}}">
+							<td >{{ loop.index+skipnum }}</td>
+							<td >{{item.smt_productId}}</td>	
+							<td >
+								<a class='edit_link' href="http://posting.aliexpress.com/wsproduct/edit_wholesale_product.htm?productId={{ item.smt_productId }}" target='_blank'>
+								<img width="70" title="去SMT编辑" src="{{item.image_url|imageUrlFilter}}" alt="" />
+								</a><br/>
+								{% if user.role %}
+								<button onclick="update_product({{item.smt_productId}});">获取更新</button><br/>
+								<button onclick="offline({{item.smt_productId}})">下架&删除</button>
+								{% else %}
+								<button onclick="update_product({{item.smt_productId}});" disabled>获取更新</button><br/>
+								<button onclick="offline({{item.smt_productId}})" disabled>下架&删除</button>
+								{% endif %}
+							</td>
+							<td>
+								<table id="sku-table" class="table-list-{{ item.smt_productId }}" >
+									<thead>
+									<tr>
+										{% set sku_first_item=item.smt_productSKUs[0] %}
+										
+										{% set sku_head_fields=sku_first_item.aeopSKUProperty %}
+										{% for field in sku_head_fields %}
+											<th>{{ field.skuPropertyIdName_en}}</th>
+										{% endfor %}
+										
+										{% if sku_head_fields%}
+											{% set sku_head_fields_fisrt=sku_head_fields[0] %}
+											{%if sku_head_fields_fisrt.skuImage%}
+											<th>Image</th>
+											{%endif%}
+										{%endif%}
+										<th>Stock</th>
+									</tr>
+									</thead>
+									<tbody>
+									{%for sku in item.smt_productSKUs%}
+									<tr class="sku-row">
+										{%if sku.aeopSKUProperty %}
+											
+											{% for sku_proper in sku.aeopSKUProperty%}
+											
+												
+												{%if sku_proper.propertyValueDefinitionName %}
+												<td class="sku_proper" name="propertyValueDefinitionName" img_addr="{{sku_proper.skuImage}}" skuproperid="{{ sku_proper.skuPropertyId}}" propervalid="{{ sku_proper.propertyValueId }}">{{sku_proper.propertyValueDefinitionName}}</td>
+												{% else %}
+												<td class="sku_proper" name="en" img_addr="{{sku_proper.skuImage}}" skuproperid="{{ sku_proper.skuPropertyId}}" propervalid="{{ sku_proper.propertyValueId }}">{{sku_proper.propertyValueIdName_en}}</td>
+												{% endif %}
+											{% endfor %}
+											
+											{%set skuProperty=sku.aeopSKUProperty[0]%}
+											{%if skuProperty.skuImage%}
+											<td class="sku-image-td">
+												<img width="35"  src="{{skuProperty.skuImage|imageUrlFilter}}" bigpic="{{skuProperty.skuImage}}" class="sku-image" onClick="skuimage_click(jq(this));" >
+												<img style="display:none;" src="" alt="" class="sku-image-large" onClick="bigimage_click(jq(this));" />
+											</td>
+											{%endif%}
+
+										{%endif%}
+										
+										<td>
+										<select name="sku_stock" class="sku_stock" >
+										{%if sku.skuStock%}
+											<option value="true" selected>in stock</option>
+											<option value="false" >not in stock</option>
+										{%else%}
+											<option value="false" selected>not in stock</option>
+											<option value="true" >in stock</option>
+										{%endif%}
+										</select>
+										</td>
+									</tr>
+									{%endfor%}
+								</tbody>
+								</table>
+							</td>
+							
+							<td>{% if user.role %}
+								<button class="syn_sku" onClick="update({{item.smt_productId}});">同步库存到SMT</button>
+								{% else %}
+								<button class="syn_sku" onClick="update({{item.smt_productId}});" disabled>同步库存到SMT</button>
+								{% endif %}
+							</td>
+							<td>
+								{% if item.taobao_link %}
+									{% if user.role %}
+									<a class="tb_link" href="{{ item.taobao_link }}" id="link_{{ item.smt_productId }}" target="_blank">{{ item.taobao_link }}</a>
+									{% else %}
+									<a class="tb_link" href="javascript:void(0);"  id="link_{{ item.smt_productId }}" target="_blank">你么有权限查看该内容</a>
+									{% endif %}
+								{%else%}
+								<a class="tb_link" href="#" id="link_{{ item.smt_productId }}" target="_blank">Null</a>
+								{%endif%}			
+								<button class="update_link" onClick="update_linkclick(jq(this));" >更改</button>
+								
+							</td>
+
+							<td></td>
+						</tr>
+						{%endfor%}

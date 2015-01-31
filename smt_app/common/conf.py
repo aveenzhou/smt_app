@@ -24,7 +24,7 @@ PRODUCT_STATE={'onSelling':'上架',
 ###################
 MONGODB={
 #            "DB_SERVER":'10.20.14.196',
-            "DB_SERVER":'192.168.1.103',
+            "DB_SERVER":'192.168.1.104',
 #            "DB_SERVER":'localhost',
 
 #            "DB_PORT":28888,

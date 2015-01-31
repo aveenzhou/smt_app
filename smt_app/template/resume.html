@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+
+<title> 个人简历</title>
+
+<!-- Meta -->
+<meta name="description" content="about me">
+<meta name="keywords" content="web,developer,python,resume" />
+<meta name="author" content="aveen zhou">
+
+<!-- CSS Stylesheet -->
+<link rel="stylesheet" type="text/css" href="/static/css//re_style.css" />
+
+<!--[if lt IE 9]> 
+<script src="/static/js/html5.js"></script>
+<![endif]-->
+<script type="text/javascript">
+function printhtml(divid){
+var headstr = "<html><head><title></title></head><body>";  
+var footstr = "</body>";  
+var printData = document.getElementById(divid).innerHTML;
+var oldstr = document.body.innerHTML;  
+window.document.body.innerHTML = headstr+printData+footstr;  
+document.getElementById('print_btn').style.display='None';
+window.print();  
+document.body.innerHTML = oldstr;  
+return true;  
+}
+
+</script>
+</head>
+<body>
+
+<!-- Begin Wrapper -->
+<div id="wrapper">
+<!-- Begin Content Area -->
+<div id="content">
+<!-- Begin Header -->
+<header>
+
+<!-- Begin Contact Section -->
+<section id="contact-details">
+<div >
+
+<!-- Begin Profile Image Section -->
+<div class="header_1">
+<img src="/static/css/images/profile.jpg"  width="200" height="200" alt="aveen zhou" />
+</div>
+<!-- End Profile Image Section -->
+
+<!-- Begin Profile Information Section -->
+<div class="header_2">
+
+<h1><span >周 平</span><button id="print_btn"  onclick="printhtml('wrapper');"><img src="/static/css/images/printer.png" alt="print"  title="打印" width='32' height='32' /></button>
+</h1>
+<h3><span >Program Developer</span></h3>
+
+<!-- Begin PostalAddress Schema -->
+<!--<div >
+<ul class="info_1">
+<li class="address"><span >555 Street Address</span>, 
+<span >Toledo</span>, <span>Ohio</span>, 
+<span >43606</span>  
+<span >U.S.A.</span></li>
+</ul>
+</div> -->
+<!-- End PostalAddress Schema -->
+
+<ul class="info_2">
+<li class="phone">Phone:<span >185-20316691</span></li>
+<li class="email">Email:<a href="mailto:aveenzhou@gmail.com" >aveenzhou@gmail.com</a></li>
+<li class="site_url">Blog:<a rel="me" href="http://www.cnblogs.com/aveenzhou/" target="_blank" title="www.your-website.com">http://www.cnblogs.com/aveenzhou/</a></li>
+<!--<li class="twitter"><a rel="me"  title="Follow Me on Twitter">@twitter-screen-name</a></li> -->
+</ul>
+
+</div>
+<!-- End Profile Information Section -->
+
+</div>
+</section>
+<!-- End Contact Section -->
+
+</header>
+<!-- End Header -->
+
+<div class="clear">&nbsp;</div>
+
+<!-- Begin Profile Section -->
+<dl>
+<dt>个人简介:</dt>
+<dd>
+
+<section class="summary">
+本人，男<br/>
+从事互联网软件行业3年有余，（当然还不是大神！）<br/>
+但也积累了一定的经验，以及分析和解决问题的能力。<br/>
+技术偏好：目前使用的常用编程语言为python(解决工作和生活中的问题，以及开发程序的首选)，其他语言在必要时有所涉猎（技术无好坏，解决问题为本）<br/>
+为人：简单<br/>
+处事：尽最大的努力做好每一件事<br/>
+期望：仍然希望获得一份技术实践性的工作</section>
+
+</dd>
+</dl>
+<!-- End Profile Section -->
+
+<div class="clear">&nbsp;</div>
+
+<!-- Begin Skills Section -->
+<div >
+
+<dl>
+<dt>技能:</dt>
+<dd>
+
+<section id="skills">
+<ul class="list1">
+<li class="list_title">语言:</li>
+<li>Python</li>
+<li >C</li>
+<li >PHP</li>
+</ul>
+<ul class="list1">
+<li class="list_title">web:</li>
+
+<li >HTML/css</li>
+<li >JavaScript/jQuery</li>
+<li >web.py,django.(web编程框架)</li>
+
+</ul>
+<ul class="list1">
+<li class="list_title">数据库:</li>
+<li >MySQL,SQLServer</li>
+<li >Mongodb</li>
+<li >sqlalchemy(python ORM库)</li>
+
+</ul>
+</ul>
+<ul class="list1">
+<li class="list_title">系统:</li>
+<li>Linux（CentOS）</li>
+<li>Nginx,Apache,Gunicorn</li>
+<li>Nagios</li>
+</ul>
+</section>
+
+</dd>
+</dl>
+
+</div>
+<!-- End Skills Section -->
+
+<div class="clear">&nbsp;</div>
+
+<!-- Begin Experience Section -->
+<dl>
+<dt>工作经历:</dt>
+
+<dd>
+
+<section id="experience">
+
+<!-- Position #1 -->
+<div >
+
+<h2 class="top"><span >python开发工程师</span></h2>
+<p class="bus1"><span>7天酒店信息中心</span></p>
+<p class="time">2013/05 - 目前</p>
+
+<p >
+<strong>工作描述：</strong>
+负责PMS(酒店管理系统)以及向相关运维工具的开发，同时负责系统的部署和监控系统（nagios）的搭建。
+</p>
+
+</div>
+
+<!-- Position #2 -->
+<div>
+
+<h2><span >python开发工程师</span></h2>
+<p class="bus1"><span> 文思软件技术公司</span></p>
+<p class="time">2011/06 -- 2012/10</p>
+
+<p >
+<strong>工作描述：</strong>
+通信数据分析工具FMA的开发，负责上层数据的业务逻辑的处理和GUI功能展示
+</p>
+
+</div>
+
+
+
+</section>
+
+</dd>
+</dl>
+<!-- End Experience Section -->
+
+<div class="clear">&nbsp;</div>
+
+<!-- Begin Publications Section -->
+<dl>
+<dt>项目经验:</dt>
+
+<dd>
+
+<section id="publications">
+<div>
+一、(2014/10-2014/10)<br/>
+速卖通aliexpress商品库存同步工具<br/>
+基于速卖通开放平台API的库存同步工具<br/>
+工具地址：  <a href="http://58.221.58.159:8089/login" target='_blank'>SMT Stock Manage System V0.1</a><br/>
+源码地址： <a href="https://github.com/aveenzhou/smt_app/" target='_blank'>https://github.com/aveenzhou/smt_app/</a><br/>
+开发环境：python2.7,web.py,速卖通API<br/>
+部署环境：windows,apache(mod_wsgi),mongodb<br/><br/>
+
+</div>
+<div>
+ 二、(2013/05 - 目前)<br/>
+1.PMS系统：
+该系统主要用于酒店行业的信息管理和业务流程处理的系统。<br/>
+基于web.py 的web开发框架， 开发业务功能，以及rest接口。<br/>
+开发环境：python2.7,web.py,sqlserver,mongodb<br/>
+部署环境：linux,nginx,gunicorn（后端服务器），nagios <br/><br/>
+2.运维部署系统：<br/>
+远程部署代码和服务器进程简单管理的web形式工具。<br/>
+主要采用python的fabric库（命令行工具，用于连接到 SSH 服务器并执行命令），来远程执行linux命令<br/>
+开发环境：python2.7,web.py,fabric,mongodb(记录代码部署信息)<br/>
+部署环境：linux,nginx,gunicorn（后端服务器）<br/><br/>
+3.Rest服务接口：<br/>
+具备接口认证，返回json数据的接口开发<br/>
+3.日志服务：<br/>
+记录应用程序的异常信息到mongodb数据库中，rest接口形式供应用程序调用<br/><br/>
+4.Nagios搭建 和监控插件开发<br/>
+监控平台Nagios的搭建和配置，监控服务器的状态和程序进程，用python编写监控插件<br/><br/>
+</div>
+
+
+<div>
+三、(2013/03)<br/>
+视频站点：<br/>
+基于django框架开发的web站点<br/>
+地址：<a href="http://filmos.sinaapp.com" target="_blank">http://filmos.sinaapp.com</a><br/>
+开发环境:python 2.6,django1.4<br/><br/>
+</div>
+
+<div>
+四、(2011/06 -- 2012/10)<br/>
+通信数据分析工具FMA:><br/>
+根据业务需求，用python完成数据处理的功能以及工具图形化的实现<br/>
+开发环境:python 2.6,wxpython<br/>
+部署环境:py2exe (打包python脚本为windows可执行程序)<br/><br/>
+</div>
+
+
+</section>
+
+</dd>
+</dl>
+<!-- End Publications Section -->
+
+<div class="clear">&nbsp;</div>
+
+<!-- Begin Education Section -->
+<dl>
+<dt>教育背景:</dt>
+<dd>
+
+<section id="education">
+<div >
+
+<p class="bus1"><span >四川师范大学成都学院 </span></p>
+
+
+<p class="summary"><span >信息管理与信息系统</span></p>
+<p class="time">2007/06-- 2011/06</p>
+
+
+
+</div>
+</section>
+
+</dd>
+</dl>
+<!-- End Education Section -->
+
+<div class="clear">&nbsp;</div>
+
+<!-- Begin Footer -->
+<footer id="footer">
+
+<!-- Begin Footer Content -->
+<div class="footer_content">
+
+
+</div>
+<!-- End Footer Content -->
+
+<div class="credits">
+Copyright © 2014-aveenzhou，联系方式:aveenzhou@gmail.com
+</div>
+
+</footer>
+<!-- End Footer -->
+
+</div>
+<!-- End Content -->
+
+</div>
+
+<!-- End Wrapper -->
+
+</body>
+</html>

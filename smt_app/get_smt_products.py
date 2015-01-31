@@ -72,7 +72,7 @@ class SMTProducts(object):
 
         for item in tmp_data_lst:
             temp={}
-            p_id=item['productId']
+            p_id=str(item['productId'])
 
             p_info=get_alidata_by_api(
                                    "api.findAeProductById",

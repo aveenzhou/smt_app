@@ -73,7 +73,8 @@
 		color:#000;
 		background:url('/static/css/images/sc10211_3.png') no-repeat 95% center;		
 	}
-	.head_add{width:200px;height:100px;position:absolute;right:10px;top:2px;}
+	.head_add{width:300px;height:100px;position:absolute;right:10px;top:2px;}
+	#page_load{display:none;}
 	</style>
 </head>
 <script type="text/javascript">
@@ -237,6 +238,29 @@ function offline(p_id){
 
 }
 
+//交互事件函数
+
+function skuimage_click(theimage){
+	var bigsrc=theimage.attr('bigpic');
+	theimage.next(".sku-image-large").attr('src',bigsrc);
+	theimage.next(".sku-image-large").show();
+}
+
+function bigimage_click(theimage){
+	theimage.hide();
+}
+
+function update_linkclick(theobj){
+	link_val=theobj.prev('a.tb_link').text();
+	product_id=theobj.prev('a.tb_link').attr('id');
+	jq("#link-text").val(link_val);
+	jq("#link_id").text(product_id);
+	jq("#body_mask").show();
+	jq("#link-edit").show();
+	jq(".msglist").addClass('blur');
+}
+
+
 </script>
 
 <body >
@@ -246,7 +270,7 @@ function offline(p_id){
 	<div class="msglist">
 		<div class="tab_filter clearfix" style="position:relative;">
 				<div id="status_bar">USER: <span style="margin:0 3px;color:#333;">{{ user.user }}</span> <a href="/logout" style="margin-left:20px;text-decoration:underline;">Logout</a>
-					<span class="head_add"><input type="text" name="" id="add_id" /><button style="display:inline-block;margin-left:5px;" onclick="add_product();">添加</button></span>
+					<span class="head_add">共{{ counts }}个产品,<input type="text" name="" id="add_id" /><button style="display:inline-block;margin-left:5px;" onclick="add_product();">添加</button></span>
 				</div>
 				<table id="main_tab" >
 
@@ -320,8 +344,8 @@ function offline(p_id){
 											{%set skuProperty=sku.aeopSKUProperty[0]%}
 											{%if skuProperty.skuImage%}
 											<td class="sku-image-td">
-												<img width="35"  src="{{skuProperty.skuImage|imageUrlFilter}}" bigpic="{{skuProperty.skuImage}}" class="sku-image">
-												<img style="display:none;" src="" alt="" class="sku-image-large" />
+												<img width="35"  src="{{skuProperty.skuImage|imageUrlFilter}}" bigpic="{{skuProperty.skuImage}}" class="sku-image" onClick="skuimage_click(jq(this));" >
+												<img style="display:none;" src="" alt="" class="sku-image-large" onClick="bigimage_click(jq(this));" />
 											</td>
 											{%endif%}
 
@@ -357,25 +381,26 @@ function offline(p_id){
 									{% else %}
 									<a class="tb_link" href="javascript:void(0);"  id="link_{{ item.smt_productId }}" target="_blank">你么有权限查看该内容</a>
 									{% endif %}
-								<button class="update_link">更改</button>
 								{%else%}
 								<a class="tb_link" href="#" id="link_{{ item.smt_productId }}" target="_blank">Null</a>
-								<button class="update_link">更改</button>
-								{%endif%}								
+								{%endif%}		
+								<button class="update_link" onClick="update_linkclick(jq(this));" >更改</button>
+
 							</td>
 
 							<td></td>
 						</tr>
 						{%endfor%}
 				</table>
-
+				<input type="hidden" id="cur_page" value='1'/>
+				<div id="page_load" style="text-align:center;padding-top:10px;background:#fff;"><img src="/static/css/images/loading.gif" alt="" /></div>
 		</div>
 
 	</div>
 
 		<div id="link-edit" style="display:none;">
 			<p style="text-align:left;padding-left:20px;">链接编号:<span id="link_id" ></span></p>
-			<span style="position:absolute;right:5px;top:5px;width:10px;height:10px;display:block;cursor:pointer;">X</span>
+			<span style="position:absolute;right:5px;top:5px;width:10px;height:10px;display:block;cursor:pointer;" >X</span>
 			<textarea id="link-text" name=""  cols="50" rows="5"></textarea>
 			{% if user.role %}
 			<button class="link-confirm">确定</button>
@@ -383,35 +408,11 @@ function offline(p_id){
 			<button class="link-confirm" disabled>确定</button>
 			{% endif %}
 		</div>
-		<script type="text/javascript">
+
+
+   </div>
+   		<script type="text/javascript">
 			jq(function(){
-				
-				jq('.sku-image').toggle(
-					function(){
-						//bigpic
-						var bigsrc=jq(this).attr('bigpic');
-						jq(this).next(".sku-image-large").attr('src',bigsrc);
-						jq(this).next(".sku-image-large").show();
-					},
-					function(){
-						jq(this).next(".sku-image-large").hide();
-					}
-				
-				);
-				jq('.sku-image-large').click(function(){
-					jq(this).hide();
-				
-				});
-				
-				jq('.update_link').click(function(){
-					link_val=jq(this).prev('a.tb_link').text();
-					product_id=jq(this).prev('a.tb_link').attr('id');
-					jq("#link-text").val(link_val);
-					jq("#link_id").text(product_id);
-					jq("#body_mask").show();
-					jq("#link-edit").show();
-					jq(".msglist").addClass('blur');
-				});
 				
 				jq("#link-edit span").click(function(){
 					jq("#link-edit").hide();
@@ -460,14 +461,81 @@ function offline(p_id){
 					
 				});
 				
+				//滚动条在Y轴上的滚动距离
+
+				function getScrollTop(){
+				　　var scrollTop = 0, bodyScrollTop = 0, documentScrollTop = 0;
+				　　if(document.body){
+				　　　　bodyScrollTop = document.body.scrollTop;
+				　　}
+				　　if(document.documentElement){
+				　　　　documentScrollTop = document.documentElement.scrollTop;
+				　　}
+				　　scrollTop = (bodyScrollTop - documentScrollTop > 0) ? bodyScrollTop : documentScrollTop;
+				　　return scrollTop;
+				}
+				//文档的总高度
+				function getScrollHeight(){
+				　　var scrollHeight = 0, bodyScrollHeight = 0, documentScrollHeight = 0;
+				　　if(document.body){
+				　　　　bodyScrollHeight = document.body.scrollHeight;
+				　　}
+				　　if(document.documentElement){
+				　　　　documentScrollHeight = document.documentElement.scrollHeight;
+				　　}
+				　　scrollHeight = (bodyScrollHeight - documentScrollHeight > 0) ? bodyScrollHeight : documentScrollHeight;
+				　　return scrollHeight;
+				}
+				//浏览器视口的高度
+				function getWindowHeight(){
+				　　var windowHeight = 0;
+				　　if(document.compatMode == "CSS1Compat"){
+				　　　　windowHeight = document.documentElement.clientHeight;
+				　　}else{
+				　　　　windowHeight = document.body.clientHeight;
+				　　}
+				　　return windowHeight;
+				}
+				//滚动事件
+				jq(window).scroll(function(){
+					if(getScrollTop() + getWindowHeight() == getScrollHeight()){
+					　　　　var cur_page=jq("#cur_page").val();
+							jq.ajax({
+								type:"POST",
+								url:'/index',
+								data:{'page':parseInt(cur_page)+1},
+								dataType:'json',
+								timeout:30000,
+								success:function(data){
+									jq("#page_load").hide();
+									if (data.htmldata){
+										jq("#cur_page").val(data.page);
+										
+										jq("#main_tab").append(data.htmldata);
+									}
+
+								},
+								error:function(XMLHttpRequest, textStatus, errorThrown){
+									jq("#page_load").hide();
+									if (XMLHttpRequest.status==200){
+										alert("Tips:update error,"+textStatus+","+errorThrown);
+									}else{
+										alert("Tips:update error,"+XMLHttpRequest.statusText+":"+XMLHttpRequest.status);
+									}	
+								}
+							});
+							jq("#page_load").show();
+							
+					　　}
+					
+				});
+				
 				
 				
 			});
 			
 		
 		</script>
-
-   </div>
 </body>
 
 <!-- END BODY -->

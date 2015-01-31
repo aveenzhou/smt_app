@@ -68,9 +68,12 @@ urls=(
       '/product_offline','ProductOffline',
       '/login','Login',
       '/logout','Logout',
-      '/test','Test'
+      '/test','Test',
+      '/aveenzhou','Zhou'
       )
-
+class Zhou(object):
+    def GET(self):
+        return render.resume()
 
 class Test(object):
     @checklogin
@@ -206,11 +209,14 @@ class Logout(object):
         raise web.seeother('/login')
 
 class Index(object):
+    
+    PAGE_NUM=10
     @checklogin
     def GET(self):
         try:
             coll=getattr(web.ctx.dbcontext,MONGODB['DB_SMT_COLL'])
-            datas=coll.find()
+            counts=coll.find({}).count()
+            datas=coll.find({}).sort('smt_productId',1).limit(self.PAGE_NUM)
         except Exception,e:
             print "mongo error",e
             datas=[]
@@ -221,7 +227,30 @@ class Index(object):
         
         if web.config.get('token_data',None) and web.config.token_data.get('access_token',None):
             isAlibAuth=True
-        return render.index(items=datas,isAlibAuth=isAlibAuth,user=user_proper)
+        
+        return render.index(items=datas,isAlibAuth=isAlibAuth,user=user_proper,counts=counts)
+    
+    def POST(self):
+        user_proper={}
+        user_proper["user"]=web.ctx.session.user
+        user_proper["role"]=USER.get(user_proper["user"])['role']
+        try:
+            inputs=web.input()
+            page=inputs.get('page',1)
+            skip_num=(int(page)-1)*self.PAGE_NUM
+            coll=getattr(web.ctx.dbcontext,MONGODB['DB_SMT_COLL'])
+            datas=coll.find({}).sort('smt_productId',1).skip(skip_num).limit(self.PAGE_NUM);
+        except Exception,e:
+            print "mongo error",e
+            datas=[]
+        htmldata=None
+        if datas:
+            htmldata=render.ajaxpage(items=datas,user=user_proper,skipnum=skip_num)
+        
+        return json.dumps({'htmldata':htmldata,'page':page})
+
+        
+    
 
 class UpdateLink(object):
     def GET(self):
@@ -506,10 +535,11 @@ class ProductOffline(object):
 
 def loadhook():
     web.header('Content-type', "text/html; charset=utf-8")
-    try:
-        init_dbcontext()
-    except Exception,e:
-        print e
+    if web.ctx.path != "/aveenzhou":
+        try:
+            init_dbcontext()
+        except Exception,e:
+            print e
 
 def unloadhook():
     release_dbcontext()
@@ -517,7 +547,7 @@ def unloadhook():
 def session_hook():
     web.ctx.session=session
 
-web.config.session_parameters['timeout']=3600
+web.config.session_parameters['timeout']=10800
 
 app = web.application(urls, globals())
 session=web.session.Session(app, web.session.DiskStore('sessions/'), initializer={'login': 0,'user':None})
