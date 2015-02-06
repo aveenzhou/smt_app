@@ -40,7 +40,7 @@ select:focus,textarea:focus,input[type="text"]:focus,input[type="password"]:focu
 text-align:center;}
 .opera input:hover,.msglist .query  form input.qbtn:hover{background:url(images/nav-bg.gif) repeat-x;}
 
-body{position:relative;}
+
 
 .head{padding:10px 0px;width:100%;background:#417690;box-shadow:0 -1px 0 #fefcfc inset,0 0 4px rgba(0,0,0,.15);border-bottom:1px solid #e0dede;}
 .head h2 a{padding: 7px;color:#fff;font-size:14px;}
@@ -165,6 +165,7 @@ form {
 }
 body {
     background:#eee url(images/furley_bg.png);
+	height:100%;
 }
 
 .login #container {

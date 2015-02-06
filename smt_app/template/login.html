@@ -5,6 +5,21 @@
 	<title></title>
 	<link rel="stylesheet" href="/static/css/style.css" />
 	<link rel="stylesheet" href="/static/css/jquery-ui.css" />
+	<script type="text/javascript" src="/static/js/jquery.min.js"></script>
+	<script type="text/javascript">
+	jQuery.noConflict(); 
+	var jq=jQuery;
+	</script>
+	<style type="text/css">
+		#container{display:none;}
+	</style>
+	<script type="text/javascript">
+	jq(function(){
+		jq("#container").delay(3).fadeIn('slow');
+	
+	});
+	
+	</script>
 </head>
 <body class="login">
 <div id="container">
@@ -24,11 +39,11 @@
 			<form action="/login" method="post" id="login-form">
 			  <div class="form-row-l">
 				
-				<label for="id_username" class="required">USER:</label> <input id="id_username" type="text" name="username" maxlength="30">
+				<label for="id_username" class="required">USER:</label> <input id="id_username" type="text" value="visitor" name="username" maxlength="30">
 			  </div>
 			  <div class="form-row-l">
 				
-				<label for="id_password" class="required">PASSWORD:</label> <input type="password" name="password" id="id_password">
+				<label for="id_password" class="required">PASSWORD:</label> <input type="password" value="123456" name="password" id="id_password">
 
 			  </div>
 			  

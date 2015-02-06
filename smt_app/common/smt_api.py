@@ -93,7 +93,12 @@ def get_alidata_by_api(api_name,
         encry_sign_str=hmac.new(APP_SECRET, sign_str, digestmod=hashlib.sha1).hexdigest().upper() #hmac_sha1加密算法
         return encry_sign_str
     
+    
     req_args['_aop_signature']=create_sign_str()
+    if req_args.get('productId',None):
+        req_args['productId']=str(req_args['productId'])
+    if req_args.get('productIds',None):
+        req_args['productIds']=str(req_args['productIds'])
     
     req_url='/'.join((OPEN_API_URL,urlPath))
     res=http.request('POST',req_url,req_args)#POST GET有长度限制

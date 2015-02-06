@@ -1,7 +1,11 @@
 						{%for item in items%}
 						
-						<tr  {%if loop.index%2==0 %}class='lstitem table_row_odd' {%else%}class="lstitem"{%endif%} id="{{item.smt_productId}}">
+						<tr  {%if loop.index%2==0 %}class='lstitem table_row_odd' {%else%}class="lstitem"{%endif%} onclick='toggle_bg(jq(this));'  id="{{item.smt_productId}}">
+							{% if skipnum %}
 							<td >{{ loop.index+skipnum }}</td>
+							{% else %}
+							<td> {{ loop.index }}</td>
+							{% endif %}
 							<td >{{item.smt_productId}}</td>	
 							<td >
 								<a class='edit_link' href="http://posting.aliexpress.com/wsproduct/edit_wholesale_product.htm?productId={{ item.smt_productId }}" target='_blank'>
@@ -32,7 +36,9 @@
 											<th>Image</th>
 											{%endif%}
 										{%endif%}
-										<th>Stock</th>
+										<!--<th>Stock</th>-->
+										<th>Stock Quanlity</th>
+
 									</tr>
 									</thead>
 									<tbody>
@@ -60,7 +66,8 @@
 
 										{%endif%}
 										
-										<td>
+										<!--<td>
+										
 										<select name="sku_stock" class="sku_stock" >
 										{%if sku.skuStock%}
 											<option value="true" selected>in stock</option>
@@ -70,6 +77,11 @@
 											<option value="true" >in stock</option>
 										{%endif%}
 										</select>
+
+										</td>-->
+										<td>
+										<input class="sku_stock" type="text" name="ipm_stock" id="ipm_stock" value='{{sku.ipmSkuStock}}'/>
+
 										</td>
 									</tr>
 									{%endfor%}

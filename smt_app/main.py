@@ -15,6 +15,7 @@ import copy
 import web
 
 import pymongo
+#import gevent
 #from gevent.pywsgi import WSGIServer
 from common.conf import *
 from common.smt_api import *
@@ -28,6 +29,8 @@ render._lookup.filters['imageUrlFilter']=imageUrlFilter
 
         
 web.config.alibba_auth_url=get_alibba_auth_url()
+
+
 
 web.cache=web.Storage()
 web.cache.cate_attr_datas=web.storage()
@@ -66,6 +69,9 @@ urls=(
       '/stock_update','StockUpdate',
       '/product_update','ProductUpdate',
       '/product_offline','ProductOffline',
+      '/bulk_get_products','BulkProductsDown',
+      '/search_product','ProductSearch',
+      
       '/login','Login',
       '/logout','Logout',
       '/test','Test',
@@ -105,7 +111,7 @@ class Test(object):
                                    productId=id
                                    )
             dict_data=json.loads(p_info)
-#            del dict_data['detail']
+            del dict_data['detail']
             return dict_data
         
         if type=="products":
@@ -229,8 +235,10 @@ class Index(object):
             isAlibAuth=True
         
         return render.index(items=datas,isAlibAuth=isAlibAuth,user=user_proper,counts=counts)
-    
+
     def POST(self):
+        if not web.ctx.session.user:
+            return json.dumps({'redirect':True})
         user_proper={}
         user_proper["user"]=web.ctx.session.user
         user_proper["role"]=USER.get(user_proper["user"])['role']
@@ -311,7 +319,8 @@ class StockUpdate(object):
                     for i in db_sku_proper:
                         temp_db_sku_key+=str(i['skuPropertyId'])+'_'+str(i['propertyValueId'])
                     if temp_db_sku_key==temp_sku_key:
-                        db_p_sku['skuStock']=p_sku['skuStock']
+#                        db_p_sku['skuStock']=p_sku['skuStock']
+                        db_p_sku['ipmSkuStock']=p_sku['ipmSkuStock']
                         p_sku['skuPrice']=db_p_sku['skuPrice']
                         p_sku['skuCode']=db_p_sku['skuCode']
             
@@ -331,6 +340,7 @@ class StockUpdate(object):
             
             if not res_data.get('success',None):
                 error= res_data['error_message'] if res_data.get('error_message',None) else res_data.get('exception','')
+                print error
                 error_data={"msg":"更新失败:%s" % str(error),"status":False,"productid":productid}
                 if res_data.get('error_code',None)=='401':
                     error_data['ali_auth_url']=web.config.alibba_auth_url
@@ -479,7 +489,8 @@ class ProductUpdate(object):
         json_data=json.loads(res_data)
         return json_data
 
-    
+
+
 
 
 class ProductOffline(object):
@@ -532,7 +543,182 @@ class ProductOffline(object):
             return json.dumps({"msg":"操作失败:%s" % str(e),"status":False,"productid":p_id})
             
 
+class ProductSearch(object):
+    def GET(self):
+        if not web.ctx.session.user:
+            return json.dumps({'redirect':True,"status":False})
+        user_proper={}
+        user_proper["user"]=web.ctx.session.user
+        user_proper["role"]=USER.get(user_proper["user"])['role']
+        
+        inputs=web.input()
+        
+        p_id=inputs.get("productId",None)
+        if not p_id:
+            return json.dumps({"htmldata":None,"status":True})
+        try:
+            p_id=int(p_id)
+            coll=getattr(web.ctx.dbcontext,MONGODB['DB_SMT_COLL'])
+            datas=coll.find({'smt_productId':p_id})
+            if not datas:
+                return json.dumps({"msg":"产品%s不存在" % p_id,"status":False,"productid":p_id})
+            
+            htmldata=render.ajaxpage(items=datas,user=user_proper,skipnum=None)
+            return json.dumps({'htmldata':htmldata,"status":True})
+        except Exception,e:
+            return json.dumps({"msg":"操作失败:%s" % str(e),"status":False,"productid":p_id})
 
+#批量下载smt产品添加到本地
+
+    
+class BulkProductsDown(object):
+    @checklogin
+    def GET(self):
+
+        web.header('Content-type','text/html')
+        web.header('Transfer-Encoding','chunked')  
+        
+        if not web.config.get('token_data',None) or web.config.token_data.get('error',None):
+            yield "<a href=\"%s\">需要授权 </a></br>" % LOCAL_APP_URL
+            return
+            
+        self.access_token=web.config.token_data.access_token
+        res_data=get_alidata_by_api(
+                           "api.findProductInfoListQuery",
+                            self.access_token,
+                            productStatusType="onSelling",
+                            currentPage=1 #默认为第一页
+                           )
+        
+        tmp_data_lst=[]
+        dict_data=json.loads(res_data)
+        
+        if not dict_data.get('success',None):
+            yield "调用api.findProductInfoListQuery接口失败</br>"
+            return
+        
+        web.cache.total_page=dict_data['totalPage']
+        tmp_data_lst.extend(dict_data['aeopAEProductDisplayDTOList'])
+        
+        for i in range(2,web.cache.total_page+1):
+            page_data=get_alidata_by_api(
+                               "api.findProductInfoListQuery",
+                                self.access_token,
+                                productStatusType="onSelling",
+                                currentPage=i
+                               )
+            page_data_dict=json.loads(page_data)
+            if not page_data_dict.get('success',None):
+                print page_data_dict
+                yield  "调用api.findProductInfoListQuery 接口失败"
+                return
+            tmp_data_lst.extend(page_data_dict['aeopAEProductDisplayDTOList'])
+        
+        coll=getattr(web.ctx.dbcontext,MONGODB['DB_SMT_COLL'])
+
+        for item in tmp_data_lst:
+            temp={}
+            p_id=int(item['productId'])
+
+            p_info=get_alidata_by_api(
+                                   "api.findAeProductById",
+                                   self.access_token,
+                                   productId=p_id
+                                   )
+            p_info_dict=json.loads(p_info)
+            if not p_info_dict.get('success',None):
+                yield "调用api.findAeProductById 接口失败</br>"
+                return
+            temp['smt_productId']=p_id
+            temp['image_url']=p_info_dict['imageURLs'].split(';')[0]
+            temp['smt_productSKUs']=p_info_dict['aeopAeProductSKUs']
+            
+            cateid=p_info_dict['categoryId']
+            atrrs=self.get_attr_by_cateid(cateid)
+            
+            if not atrrs.get('success',None):
+                yield "调用api.getAttributesResultByCateId 接口失败</br>"
+                return
+            
+            atrrs_lst=atrrs['attributes']
+            
+            smt_skus=temp['smt_productSKUs']
+            
+            for item in smt_skus:
+                if item['aeopSKUProperty']:
+                    for sku_p in item['aeopSKUProperty']:
+                        skuPropertyIdName_en,propertyValues=self.get_skuPropertyId_Name(atrrs_lst,sku_p['skuPropertyId'])
+                        propertyValueIdName_en=self.get_propertyValueId_Name(propertyValues,sku_p['propertyValueId'])
+                        sku_p['skuPropertyIdName_en']=skuPropertyIdName_en
+                        sku_p['propertyValueIdName_en']=propertyValueIdName_en
+            
+            temp['taobao_link']=self.get_taobaolinkbyId(p_id)
+            is_exist=coll.find_one({'smt_productId':p_id})
+            if not is_exist:
+                coll.insert(temp)
+                yield "Get Data: %s</br>" % str(temp['smt_productId'])
+            else:
+                if is_exist.get('taobao_link',None) and not temp['taobao_link']:
+                    temp['taobao_link']=is_exist['taobao_link']
+                coll.update({'smt_productId':p_id},{'$set':temp})
+                yield "Update Data: %s</br>" % str(temp['smt_productId'])
+        
+        yield "Over!!!</br>"
+
+    def get_attr_by_cateid(self,cateid):
+        '''根据产品的cateId获取属性值'''
+        if web.cache.cate_attr_datas.get(cateid,None):
+            return web.cache.cate_attr_datas[cateid]
+        
+        
+        res_data=get_alidata_by_api(
+                           "api.getAttributesResultByCateId",
+                            self.access_token,
+                            cateId=cateid,
+                           )
+        json_data=json.loads(res_data)
+        
+        web.cache.cate_attr_datas[cateid]=json_data
+        return json_data
+    
+    def get_skuPropertyId_Name(self,attr_lst,skuPropertyId):
+        '''
+                        根据库存属性id从属性列表中取出相应的skuPropertyIdName_en和propertyValues列表
+        '''
+        if web.cache.sku_properid_datas.get(skuPropertyId,None):
+            return web.cache.sku_properid_datas[skuPropertyId]
+        
+        for item in attr_lst:
+            if item['id']==skuPropertyId:
+                skuPropertyIdName_en=item['names']['en']
+                if item.get('values',None):
+                    propertyValues=item['values']
+                break
+            
+        web.cache.sku_properid_datas[skuPropertyId]=(skuPropertyIdName_en,propertyValues)
+        return (skuPropertyIdName_en,propertyValues)
+            
+    def get_propertyValueId_Name(self,propertyValues,propertyValueId):
+        if web.cache.sku_properval_datas.get(propertyValueId,None):
+            return web.cache.sku_properval_datas[propertyValueId]
+        
+        for item in propertyValues:
+            if propertyValueId==item['id']:
+                propertyValueIdName_en=item['names']['en']
+                web.cache.sku_properval_datas[propertyValueId]=propertyValueIdName_en
+                return propertyValueIdName_en
+        
+    def get_taobaolinkbyId(self,p_id):
+        res_data=get_alidata_by_api(
+                           "api.listTbProductByIds",
+                            self.access_token,
+                            productIds=p_id,
+                           )
+        json_data=json.loads(res_data)
+        if isinstance(json_data, list) and json_data:
+            link=json_data[0].get('detailUrl',None)
+            return link
+        
 def loadhook():
     web.header('Content-type', "text/html; charset=utf-8")
     if web.ctx.path != "/aveenzhou":
@@ -546,8 +732,8 @@ def unloadhook():
 
 def session_hook():
     web.ctx.session=session
-
-web.config.session_parameters['timeout']=10800
+web.config.session_parameters['cookie_name']='stock_session_id'
+web.config.session_parameters['timeout']=18000# 5hours
 
 app = web.application(urls, globals())
 session=web.session.Session(app, web.session.DiskStore('sessions/'), initializer={'login': 0,'user':None})

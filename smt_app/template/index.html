@@ -46,8 +46,9 @@
 	
 	.blur{-webkit-filter:blur(3px);}
 	.blur2{-webkit-filter:blur(5px);}
+	.blur3{-webkit-filter:blur(10px);}
 	#body_mask{
-		position: absolute;
+		position: fixed;
 		top: 0;
 		left: 0;
 		width: 100%;
@@ -73,8 +74,12 @@
 		color:#000;
 		background:url('/static/css/images/sc10211_3.png') no-repeat 95% center;		
 	}
-	.head_add{width:300px;height:100px;position:absolute;right:10px;top:2px;}
+	.head_add{width:40%;position:absolute;right:10px;top:2px;}
 	#page_load{display:none;}
+	
+	#proecess_window{display:none;position:absolute;left:30%;top:10%;background:#fff;z-index:9999;border:1px solid #ddd;}
+	
+	.table_tr_bg{background:#E6EAEA;}
 	</style>
 </head>
 <script type="text/javascript">
@@ -101,12 +106,19 @@
 														  });
 			
 			});
-			var stock=jq(this).find(".sku_stock").val();
-			if(stock=='false'){
-				sku_propert_item['skuStock']=false;
-			}else{
-				sku_propert_item['skuStock']=true;
-			}
+			//var stock=jq(this).find(".sku_stock").val();
+			//if(stock=='false'){
+			//	sku_propert_item['skuStock']=false;
+			//}else{
+			//	sku_propert_item['skuStock']=true;
+			//}
+			
+			//库存量字段
+			var stock_num=parseInt(jq(this).find("#ipm_stock").val())
+			sku_propert_item['ipmSkuStock']=stock_num;
+			//if(stock_num==0){
+			//	sku_propert_item['skuStock']=false;
+			//}
 				
 				
 			productSKUs.push(sku_propert_item);
@@ -197,6 +209,9 @@ function add_product(){
 	
 }
 
+
+
+
 function offline(p_id){
 		jq.ajax({
 				type:'GET',
@@ -255,13 +270,74 @@ function update_linkclick(theobj){
 	product_id=theobj.prev('a.tb_link').attr('id');
 	jq("#link-text").val(link_val);
 	jq("#link_id").text(product_id);
-	jq("#body_mask").show();
-	jq("#link-edit").show();
+	jq("#body_mask").fadeIn();
+	jq("#link-edit").fadeIn('fast');
 	jq(".msglist").addClass('blur');
 }
 
+{% if user.role %}
+function add_allproducts(theObj){
+	if(confirm("确定更新所有数据！")){
+		theObj.attr('disabled','true');
+		window.open('/bulk_get_products');
+	}
+}
+{% endif %}
 
-</script>
+function search_prodcut(){
+	var p_id=jq("#add_id").val();
+	jq.ajax({
+		type:'GET',
+		url:'search_product',
+		data:{"productId":p_id},
+		dataType:'json',
+		timeout:30000,
+		success:function(data){
+			jq("#load-pic").hide();
+			if (data.redirect){
+				alert("会话已过期,重新登陆！")
+				window.location.href='/login';
+			}
+			if(data.status){
+				if (data.htmldata){
+					jq("#cur_page").val(data.page);
+					jq("#main_tab tr").remove('.lstitem');
+					jq("#main_tab").append(data.htmldata);
+				}else{
+					window.location.reload();
+				}
+			}else{
+				alert(data.msg);
+			}
+			jq("#body_mask").hide();
+			jq(".msglist").removeClass('blur2');
+		},
+		error:function(XMLHttpRequest, textStatus, errorThrown){
+				jq("#load-pic").hide();
+				jq("#body_mask").hide();
+				jq(".msglist").removeClass('blur2');
+				if (XMLHttpRequest.status==200){
+					alert("Tips:update error,"+textStatus+","+errorThrown);
+				}else{
+					alert("Tips:update error,"+XMLHttpRequest.statusText+":"+XMLHttpRequest.status);
+				}	
+			}
+		});
+		
+		jq(".msglist").addClass('blur2');
+		jq("#body_mask").show();
+		jq("#load-pic").show();
+}
+
+
+function toggle_bg(thisObj){
+	
+	jq('#main_tab tr.lstitem').removeClass('table_tr_bg');
+	thisObj.addClass('table_tr_bg');
+
+}
+
+</script>  
 
 <body >
    <div id="body_mask" style="display:none;"></div>
@@ -269,8 +345,16 @@ function update_linkclick(theobj){
    <div style="height:100%;">
 	<div class="msglist">
 		<div class="tab_filter clearfix" style="position:relative;">
-				<div id="status_bar">USER: <span style="margin:0 3px;color:#333;">{{ user.user }}</span> <a href="/logout" style="margin-left:20px;text-decoration:underline;">Logout</a>
-					<span class="head_add">共{{ counts }}个产品,<input type="text" name="" id="add_id" /><button style="display:inline-block;margin-left:5px;" onclick="add_product();">添加</button></span>
+				<div id="status_bar"> USER: <span style="margin:0 3px;color:#333;">{{ user.user }}</span> <a href="/logout" style="margin-left:20px;text-decoration:underline;">Logout</a>
+					<span class="head_add">共{{ counts }}个产品,
+					<input type="text" name="" id="add_id" />
+					{% if user.role %}
+					<!--<button style="display:inline-block;margin-right:20%;" onclick="add_allproducts(jq(this))">批量更新</button>-->
+					<button style="display:inline-block;margin-left:5px;" onclick="add_product();">单个添加</button>
+					{% endif %}
+					<button style="display:inline-block;margin-left:5px;" onclick='search_prodcut();' >查找</button>
+					</span>
+					
 				</div>
 				<table id="main_tab" >
 
@@ -291,7 +375,7 @@ function update_linkclick(theobj){
 
 						{%for item in items%}
 						
-						<tr  {%if loop.index%2==0 %}class='lstitem table_row_odd' {%else%}class="lstitem"{%endif%} id="{{item.smt_productId}}">
+						<tr  {%if loop.index%2==0 %}class='lstitem table_row_odd'  {%else%}class="lstitem"{%endif%} onclick='toggle_bg(jq(this));'  id="{{item.smt_productId}}">
 							<td >{{loop.index}}</td>
 							<td >{{item.smt_productId}}</td>	
 							<td >
@@ -323,7 +407,8 @@ function update_linkclick(theobj){
 											<th>Image</th>
 											{%endif%}
 										{%endif%}
-										<th>Stock</th>
+										<!--<th>Stock</th>-->
+										<th>Stock Quanlity</th>
 									</tr>
 									</thead>
 									<tbody>
@@ -351,7 +436,9 @@ function update_linkclick(theobj){
 
 										{%endif%}
 										
-										<td>
+										<!--<td>
+										
+										
 										<select name="sku_stock" class="sku_stock" >
 										{%if sku.skuStock%}
 											<option value="true" selected>in stock</option>
@@ -361,6 +448,10 @@ function update_linkclick(theobj){
 											<option value="true" >in stock</option>
 										{%endif%}
 										</select>
+										
+										</td>-->
+										<td>
+											<input class="sku_stock" type="text" name="ipm_stock" id="ipm_stock" value='{{sku.ipmSkuStock}}'/>
 										</td>
 									</tr>
 									{%endfor%}
@@ -500,31 +591,41 @@ function update_linkclick(theobj){
 				jq(window).scroll(function(){
 					if(getScrollTop() + getWindowHeight() == getScrollHeight()){
 					　　　　var cur_page=jq("#cur_page").val();
-							jq.ajax({
-								type:"POST",
-								url:'/index',
-								data:{'page':parseInt(cur_page)+1},
-								dataType:'json',
-								timeout:30000,
-								success:function(data){
-									jq("#page_load").hide();
-									if (data.htmldata){
-										jq("#cur_page").val(data.page);
+							jq("#cur_page").val(0);//立即设为0，避免下拉同时两次请求获得一样的内容
+							if (cur_page !=0 ){
+								jq.ajax({
+									type:"POST",
+									url:'/index',
+									data:{'page':parseInt(cur_page)+1},
+									dataType:'json',
+									timeout:30000,
+									success:function(data){
+										jq("#page_load").hide();
+										if (data.redirect){
+											alert("会话已过期,重新登陆！")
+											window.location.href='/login';
+										}
 										
-										jq("#main_tab").append(data.htmldata);
-									}
+										if (data.htmldata){
+											jq("#cur_page").val(data.page);
+											
+											jq("#main_tab").append(data.htmldata);
+										}
 
-								},
-								error:function(XMLHttpRequest, textStatus, errorThrown){
-									jq("#page_load").hide();
-									if (XMLHttpRequest.status==200){
-										alert("Tips:update error,"+textStatus+","+errorThrown);
-									}else{
-										alert("Tips:update error,"+XMLHttpRequest.statusText+":"+XMLHttpRequest.status);
-									}	
-								}
-							});
-							jq("#page_load").show();
+									},
+									error:function(XMLHttpRequest, textStatus, errorThrown){
+										jq("#page_load").hide();
+										jq("#cur_page").val(cur_page);
+										if (XMLHttpRequest.status==200){
+											alert("Tips:update error,"+textStatus+","+errorThrown);
+										}else{
+											alert("Tips:update error,"+XMLHttpRequest.statusText+":"+XMLHttpRequest.status);
+										}	
+									}
+								});
+								jq("#page_load").show();
+							}
+
 							
 					　　}
 					

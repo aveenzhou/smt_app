@@ -66,13 +66,18 @@ class SMTProducts(object):
                                 productStatusType="onSelling",
                                 currentPage=i
                                )
-            tmp_data_lst.extend(json.loads(page_data)['aeopAEProductDisplayDTOList'])
+            page_data_dict=json.loads(page_data)
+            if not page_data_dict.get('success',None):
+                print page_data_dict
+                print  "调用api.findProductInfoListQuery 接口失败"
+                return
+            tmp_data_lst.extend(page_data_dict['aeopAEProductDisplayDTOList'])
         
         coll=getattr(web.ctx.dbcontext,MONGODB['DB_SMT_COLL'])
 
         for item in tmp_data_lst:
             temp={}
-            p_id=str(item['productId'])
+            p_id=int(item['productId'])
 
             p_info=get_alidata_by_api(
                                    "api.findAeProductById",
