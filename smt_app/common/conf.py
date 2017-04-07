@@ -29,19 +29,19 @@ MONGODB={
 
 #            "DB_PORT":28888,
             "DB_PORT":27017,
-            "DB_NAME":'smt_app_db',
-            "DB_SMT_COLL":'smt_procucts_coll',
-            "DB_TOKEN_COLL":'smt_token_coll',
-            "DB_USER":'aveen',
-            "DB_ADMIN_PWD":'123456',
-            "DB_PWD":'123',
+            "DB_NAME":'',
+            "DB_SMT_COLL":'',
+            "DB_TOKEN_COLL":'',
+            "DB_USER":'',
+            "DB_ADMIN_PWD":'',
+            "DB_PWD":'',
             "IS_AUTH":False
          }
 ##########################
 
 USER={
-      'admin':{'password':'admin1989','role':1},
-      'visitor':{'password':'123456','role':0}
+      'admin':{'password':'','role':1},
+      'visitor':{'password':'','role':0}
       }
 
 
